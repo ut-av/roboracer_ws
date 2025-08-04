@@ -1,0 +1,5 @@
+-v $ROOT:/home/$_UNAME/$(basename -- $ROOT)
+-v $HOME/.ssh/authorized_keys:/home/$_UNAME/.ssh/authorized_keys
+-v $HOME/.bash_history:/home/$_UNAME/.bash_history
+-v /tmp/.X11-unix:/tmp/.X11-unix:ro
+-v /dev/shm:/dev/shm
