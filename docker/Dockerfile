@@ -43,6 +43,9 @@ RUN apt-get update && apt-get install -y \
   libqt5websockets5-dev \
   libqt5opengl5-dev
 
+# So we can detect if we are in a container
+ENV CONTAINER_NAME=roboracer_ws
+
 # =============================================================================
 # User Creation and Configuration
 # =============================================================================
@@ -60,16 +63,16 @@ RUN mkdir -p /home/${USERNAME} && \
     echo "export LC_ALL=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "export LANG=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "source \"/opt/ros/$ROS_DISTRO/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
-    echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/orin_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
-    echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/orin_ws/src/amrl_maps/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
-    echo "cd /home/${USERNAME}/orin_ws" >> /home/${USERNAME}/.bash_profile
+    echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
+    echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_maps/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
+    echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
 
 # =============================================================================
 # Switch to User Context
 # =============================================================================
 
 USER $username
-ENV HOME /home/$username
+ENV HOME=/home/$username
 WORKDIR /home/$username
 
 # =============================================================================

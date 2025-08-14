@@ -1,35 +1,74 @@
 #!/bin/bash
 
-set -e
-set -x
+#set -e
+#set -x
 
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 _GID=$(id -g)
 _UID=$(id -u)
 _UNAME=$(id -un)
 
-USAGE="$0 [command: build|start|stop|restart|shell] [container name]"
+USAGE="$0 [command: build|start|stop|restart|shell|run] --container-name <name> [--cmd <command>]"
 
-DOCKER_COMMAND=$1
+# Initialize variables
+DOCKER_COMMAND=""
+CONTAINER_NAME=""
+CMD_TO_RUN=""
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    build|start|stop|restart|shell|run|prune|rm)
+      if [ -z "$DOCKER_COMMAND" ]; then
+        DOCKER_COMMAND=$1
+      else
+        echo "Error: Multiple commands specified"
+        echo $USAGE
+        exit 1
+      fi
+      shift
+      ;;
+    --container-name)
+      CONTAINER_NAME="$2"
+      shift 2
+      ;;
+    --cmd)
+      CMD_TO_RUN="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      echo $USAGE
+      exit 1
+      ;;
+  esac
+done
+
 if [ -z "$DOCKER_COMMAND" ]; then
   echo "Please specify a command."
   echo $USAGE
-  exit
+  exit 1
 fi
 
-CONTAINER_NAME=$2
 CONTAINER_NAME_FILE=$ROOT/config/name
-if test -f "$CONTAINER_NAME_FILE"; then
+if test -f "$CONTAINER_NAME_FILE" && [ -z "$CONTAINER_NAME" ]; then
   CONTAINER_NAME="$(cat $CONTAINER_NAME_FILE)"
-  echo "Container name loaded from $CONTAINER_NAME_FILE: $CONTAINER_NAME"
+  #echo "Container name loaded from $CONTAINER_NAME_FILE: $CONTAINER_NAME"
 fi
 if [ -z "$CONTAINER_NAME" ]; then
-  echo "Please specify a container name."
+  echo "Please specify a container name using --container-name."
   echo $USAGE
-  exit
+  exit 1
 fi
 if [[ ! -f $CONTAINER_NAME_FILE ]]; then
   echo $CONTAINER_NAME > $CONTAINER_NAME_FILE
+fi
+
+# Validate run command requirements
+if [ "$DOCKER_COMMAND" = "run" ] && [ -z "$CMD_TO_RUN" ]; then
+  echo "Error: --cmd argument is required when using 'run' command"
+  echo $USAGE
+  exit 1
 fi
 
 CONTAINER_FILE=$ROOT/docker/Dockerfile
@@ -49,12 +88,12 @@ done < "$ROOT/config/ports"
 # host-specific setup
 case "$(uname -s)" in
    Darwin)
-     echo 'Mac OS X'
+     #echo 'Mac OS X'
      ;;
    Linux)
-     echo 'Linux'
+     #echo 'Linux'
      set +e
-     xhost +local:
+     xhost +local: 2>/dev/null
      set -e
      HOST_FLAGS="--gpus all"
      HOST_EXEC=$EXEC
@@ -78,7 +117,7 @@ dockerbuild() {
 dockerprune() {
   docker image prune -f
 }
-dockerrun() {
+dockerstart() {
   docker run --rm \
     $HOST_FLAGS \
     $MOUNT_DATA \
@@ -93,31 +132,39 @@ dockerstop() {
 dockershell() {
   docker exec -it $RUNNING_CONTAINER $EXEC
 }
+dockerrun() {
+  docker exec -t $RUNNING_CONTAINER bash -c "$CMD_TO_RUN"
+}
 
 case $DOCKER_COMMAND in
   build)
     dockerbuild
     dockerprune
     dockerstop
-    dockerrun
+    dockerstart
     ;;
   prune)
     dockerprune
     ;;
   start)
-    dockerrun
+    dockerstart
     ;;
   stop)
     dockerstop
     ;;
   restart)
     dockerstop
-    dockerrun
+    dockerstart
     ;;
-  shell):
-    [[ ! -z "$RUNNING_CONTAINER" ]] || dockerrun
+  shell)
+    [[ ! -z "$RUNNING_CONTAINER" ]] || dockerstart
     RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
     dockershell
+    ;;
+  run)
+    [[ ! -z "$RUNNING_CONTAINER" ]] || dockerstart
+    RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
+    dockerrun
     ;;
   rm)
     dockerstop
