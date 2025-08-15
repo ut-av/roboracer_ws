@@ -63,6 +63,7 @@ RUN mkdir -p /home/${USERNAME} && \
     echo "export LC_ALL=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "export LANG=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "source \"/opt/ros/$ROS_DISTRO/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
+    echo "source \"/home/${USERNAME}/roboracer_ws/install/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_maps/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
