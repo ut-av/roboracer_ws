@@ -3,3 +3,5 @@
 -v $HOME/.bash_history:/home/$_UNAME/.bash_history
 -v /tmp/.X11-unix:/tmp/.X11-unix:ro
 -v /dev/shm:/dev/shm
+--device /dev/input
+--device /dev/bus/usb

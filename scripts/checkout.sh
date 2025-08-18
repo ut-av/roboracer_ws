@@ -1,10 +1,18 @@
 #!/bin/bash
 
 THIS_FILE=$(realpath $0)
-ROOT=$(dirname $THIS_FILE)
+ROOT=$(dirname $THIS_FILE)/..
 
 pushd $ROOT/src/
-git clone https://github.com/ut-amrl/amrl_maps.git
-git clone https://github.com/ut-amrl/amrl_msgs.git
-git clone git@github.com:ut-amrl/ut_automata.git --recurse-submodules
+if [ ! -d $ROOT/src/amrl_maps ]; then
+  git clone --branch ros2 https://github.com/ut-amrl/amrl_maps.git
+fi
+
+if [ ! -d $ROOT/src/amrl_msgs ]; then
+  git clone https://github.com/ut-amrl/amrl_msgs.git
+fi
+
+if [ ! -d $ROOT/src/ut_automata ]; then
+  git clone git@github.com:ut-amrl/ut_automata.git --recurse-submodules
+fi
 popd

@@ -31,7 +31,9 @@ RUN apt-get update && apt-get install -y \
   git \
   wget \
   vim \
-  curl
+  curl \
+  psmisc \
+  sudo
 
 # =============================================================================
 # UT AUTOmata dependencies
@@ -53,15 +55,34 @@ ENV CONTAINER_NAME=roboracer_ws
 ENV UID=$uid
 ENV GID=$gid
 ENV USERNAME=$username
-RUN mkdir -p /home/${USERNAME} && \
-    echo "${USERNAME}:x:${UID}:${GID}:${USERNAME},,,:/${USERNAME}:/bin/bash" >> /etc/passwd && \
-    echo "${USERNAME}:x:${GID}:" >> /etc/group && \
+
+# Create user and group, then configure sudo
+RUN set -e && \
+    # Create group if it doesn't exist
+    getent group ${GID} || groupadd -g ${GID} ${USERNAME} && \
+    # Handle user creation/modification
+    if id ${UID} >/dev/null 2>&1; then \
+        # User with this UID exists, modify it
+        existing_user=$(id -nu ${UID}) && \
+        usermod -l ${USERNAME} -d /home/${USERNAME} -m $existing_user 2>/dev/null || true && \
+        usermod -g ${GID} ${USERNAME} 2>/dev/null || true; \
+    else \
+        # Create new user
+        useradd -u ${UID} -g ${GID} -m -s /bin/bash ${USERNAME}; \
+    fi && \
+    # Ensure home directory exists and has correct ownership
+    mkdir -p /home/${USERNAME} && \
+    chown -R ${UID}:${GID} /home/${USERNAME} && \
+    # Add to sudo group and configure passwordless sudo
+    usermod -aG sudo ${USERNAME} && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME} && \
     chmod 0440 /etc/sudoers.d/${USERNAME} && \
-    chown ${UID}:${GID} -R /home/${USERNAME} && \
-    echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME}/.bash_profile && \
+    visudo -c
+
+RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME}/.bash_profile && \
     echo "export LC_ALL=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "export LANG=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
+    echo "alias killros2='killall -9 ros2 _ros2_daemon rviz2 gzserver robot_state_publisher gzclient controller_server lifecycle_manager'" >> /home/${USERNAME}/.bash_profile && \
     echo "source \"/opt/ros/$ROS_DISTRO/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "source \"/home/${USERNAME}/roboracer_ws/install/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \

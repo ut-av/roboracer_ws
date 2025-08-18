@@ -1,0 +1,19 @@
+name: sim 
+root: ~/roboracer_ws
+
+windows:
+  - simulator:
+      layout: main-vertical
+      panes:
+        - 
+          - open src/ut_automata/web_rviz.html
+          - ./container shell
+        -
+          - ./container shell
+          - ros2 run ut_automata simulator --localize
+        -
+          - ./container shell
+          - ros2 run ut_automata websocket
+        -
+          - ./container shell
+          - ros2 run ut_automata joystick_teleop.py
