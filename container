@@ -85,10 +85,11 @@ fi
 # if we're on a jetson
 if [ $ISJETSON -eq 1 ]; then
   CONTAINER_FILE=$ROOT/docker/Dockerfile_jetson
+  _DISPLAY="${DISPLAY-:0}"
 else
   CONTAINER_FILE=$ROOT/docker/Dockerfile
+  _DISPLAY="${DISPLAY-:1.0}"
 fi
-_DISPLAY="${DISPLAY-:1.0}"
 
 RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
 
