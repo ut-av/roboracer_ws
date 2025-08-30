@@ -13,6 +13,6 @@ if [ ! -d $ROOT/src/amrl_msgs ]; then
 fi
 
 if [ ! -d $ROOT/src/ut_automata ]; then
-  git clone git@github.com:ut-amrl/ut_automata.git --recurse-submodules
+  git clone --branch ros2 git@github.com:ut-amrl/ut_automata.git --recurse-submodules
 fi
 popd

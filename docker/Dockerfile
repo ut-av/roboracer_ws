@@ -3,7 +3,7 @@
 #  - Locked to a specific version of the ROS image to ensure reproducibility
 #  - Updates here: https://hub.docker.com/r/osrf/ros/tags?name=jazzy-desktop
 # =============================================================================
-FROM osrf/ros:jazzy-desktop@sha256:20cce785f4b6810985a5a5617d66074d6a76f4ce8dde449d395198051f57cfbe
+FROM osrf/ros:jazzy-desktop
 
 ARG gid
 ARG uid
