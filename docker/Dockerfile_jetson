@@ -3,11 +3,14 @@
 #  - Locked to a specific version of the ROS image to ensure reproducibility
 #  - Updates here: https://hub.docker.com/r/osrf/ros/tags?name=jazzy-desktop
 # =============================================================================
-FROM osrf/ros:jazzy-desktop@sha256:20cce785f4b6810985a5a5617d66074d6a76f4ce8dde449d395198051f57cfbe
+FROM dustynv/ros:jazzy-desktop-r36.4.0-cu128-24.04@sha256:45236ccbdcd74176d6d4c12ae02c2dc8228a1a944d4161b67e8f33d91ed52c8c
 
 ARG gid
 ARG uid
 ARG username
+
+# Update ROS key
+RUN sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
 
 # =============================================================================
 # System Package Installation
@@ -83,11 +86,13 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "export LC_ALL=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "export LANG=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "alias killros2='killall -9 ros2 _ros2_daemon rviz2 gzserver robot_state_publisher gzclient controller_server lifecycle_manager'" >> /home/${USERNAME}/.bash_profile && \
-    echo "source \"/opt/ros/$ROS_DISTRO/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
+    echo "source \"/opt/ros/$ROS_DISTRO/install/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "source \"/home/${USERNAME}/roboracer_ws/install/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_maps/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
+    echo "export PS1='\\[\\e[0;32m\\][docker]:\\u@\\h:\\w\\$ \\[\\e[0m\\]'" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
+
 
 # =============================================================================
 # Switch to User Context
