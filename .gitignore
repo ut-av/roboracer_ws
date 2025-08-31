@@ -18,6 +18,7 @@ data
 data_bk
 navigation
 .vscode
-src
 install
 log
+external
+src

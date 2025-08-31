@@ -35,6 +35,9 @@ RUN apt-get update && apt-get install -y \
   psmisc \
   sudo
 
+COPY scripts/ros2_deps.sh /tmp/ros2_deps.sh
+RUN /tmp/ros2_deps.sh && rm /tmp/ros2_deps.sh
+
 # =============================================================================
 # UT AUTOmata dependencies
 # =============================================================================
@@ -84,9 +87,10 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "export LANG=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "alias killros2='killall -9 ros2 _ros2_daemon rviz2 gzserver robot_state_publisher gzclient controller_server lifecycle_manager'" >> /home/${USERNAME}/.bash_profile && \
     echo "source \"/opt/ros/$ROS_DISTRO/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
-    echo "source \"/home/${USERNAME}/roboracer_ws/install/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
+    echo "source \"/home/${USERNAME}/roboracer_ws/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_maps/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
+    echo "export CMAKE_BUILD_MODE=Simulation" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
 
 # =============================================================================

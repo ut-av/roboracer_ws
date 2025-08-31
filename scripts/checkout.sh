@@ -15,4 +15,11 @@ fi
 if [ ! -d $ROOT/src/ut_automata ]; then
   git clone --branch ros2 git@github.com:ut-amrl/ut_automata.git --recurse-submodules
 fi
+
+REALSENSE_VERSION=v2.56.5-l4t36.4.4
+if [ ! -d "$ROOT/external/librealsense" ]; then
+  cd $ROOT/external
+  git clone --branch $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git
+fi
+
 popd
