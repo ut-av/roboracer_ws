@@ -135,13 +135,39 @@ dockerprune() {
   docker image prune -f
 }
 dockerstart() {
-  docker run --rm \
-    $HOST_FLAGS \
-    $MOUNT_DATA \
-    $PORT_DATA \
-    --ulimit nofile=65536:65536 \
-    -e DISPLAY=$_DISPLAY \
-    -it -d --name=$CONTAINER_NAME $CONTAINER_NAME $HOST_EXEC
+  # Retry docker run up to 3 times to avoid race when multiple processes try to
+  # create the same container name concurrently. If another process created
+  # the container between attempts, consider that a success.
+  local max_attempts=3
+  local attempt=1
+  while true; do
+    if docker run --rm \
+      $HOST_FLAGS \
+      $MOUNT_DATA \
+      $PORT_DATA \
+      --ulimit nofile=65536:65536 \
+      -e DISPLAY=$_DISPLAY \
+      -it -d --name=$CONTAINER_NAME $CONTAINER_NAME $HOST_EXEC; then
+      # started successfully
+      RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
+      break
+    else
+      rc=$?
+      # Check if container exists now (another parallel process started it)
+      RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
+      if [[ ! -z "$RUNNING_CONTAINER" ]]; then
+        echo "Container $CONTAINER_NAME is already running (detected after failed run)."
+        break
+      fi
+      if [ $attempt -ge $max_attempts ]; then
+        echo "Failed to start container $CONTAINER_NAME after $attempt attempts."
+        return $rc
+      fi
+      echo "Attempt $attempt to start $CONTAINER_NAME failed; retrying..."
+      attempt=$((attempt+1))
+      sleep 1
+    fi
+  done
 }
 dockerstop() {
   [[ ! -z "$RUNNING_CONTAINER" ]] && docker stop $RUNNING_CONTAINER || echo "$CONTAINER_NAME is not running"
