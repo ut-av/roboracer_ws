@@ -38,6 +38,14 @@ RUN apt-get update && apt-get install -y \
   psmisc \
   sudo
 
+# =============================================================================
+# Realsense
+# =============================================================================
+RUN apt-get update && apt-get install -y \
+  kmod
+COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
+COPY external/librealsense /tmp/librealsense
+RUN /tmp/install_realsense_library.sh && rm /tmp/install_realsense_library.sh
 
 COPY scripts/ros2_deps.sh /tmp/ros2_deps.sh
 RUN /tmp/ros2_deps.sh && rm /tmp/ros2_deps.sh
@@ -52,22 +60,12 @@ RUN apt-get update && apt-get install -y \
   libqt5websockets5-dev \
   libqt5opengl5-dev
 
-# =============================================================================
-# Realsense
-# =============================================================================
-RUN apt-get update && apt-get install -y \
-  kmod
-COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
-COPY external/librealsense /tmp/librealsense
-RUN /tmp/install_realsense_library.sh && rm /tmp/install_realsense_library.sh
-
 # So we can detect if we are in a container
 ENV CONTAINER_NAME=roboracer_ws
 
 # =============================================================================
 # User Creation and Configuration
 # =============================================================================
-
 ENV UID=$uid
 ENV GID=$gid
 ENV USERNAME=$username
@@ -103,7 +101,7 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "source \"/home/${USERNAME}/roboracer_ws/install/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_maps/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
-    echo "export CMAKE_BUILD_MODE=Hardware" >> /home/${USERNAME}/.bash_profile && \
+    echo "export ROS_VERSION=2" >> /home/${USERNAME}/.bash_profile && \
     echo "export PS1='\\[\\e[0;32m\\][docker]:\\u@\\h:\\w\\$ \\[\\e[0m\\]'" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
 

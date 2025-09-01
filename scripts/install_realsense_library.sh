@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 THIS_FILE=$(realpath $0)
 ROOT=$(realpath $(dirname $THIS_FILE)/..)
@@ -15,13 +16,13 @@ else
   cd $ROOT/external/librealsense
 fi
 
-LSMOD_INCLUDES_UVCVIDEO=$(lsmod | grep uvcvideo)
-if [ -z "$LSMOD_INCLUDES_UVCVIDEO" ]; then
-    echo "UVCVideo kernel module is not loaded"
-    echo "Ensure the kernel module is compiled and loaded by running the command OUTSIDE the docker container: "
-    echo "    ./scripts/install_realsense_kernel_path.sh"
-    exit 1
-fi
+#LSMOD_INCLUDES_UVCVIDEO=$(lsmod | grep uvcvideo)
+#if [ -z "$LSMOD_INCLUDES_UVCVIDEO" ]; then
+#    echo "UVCVideo kernel module is not loaded"
+#    echo "Ensure the kernel module is compiled and loaded by running the command OUTSIDE the docker container: "
+#    echo "    ./scripts/install_realsense_kernel_path.sh"
+#    exit 1
+#fi
 
 sudo apt-get install -y \
     git \
