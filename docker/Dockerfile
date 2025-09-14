@@ -1,9 +1,9 @@
 # =============================================================================
 # Base Image and Build Arguments
 #  - Locked to a specific version of the ROS image to ensure reproducibility
-#  - Updates here: https://hub.docker.com/r/osrf/ros/tags?name=jazzy-desktop
+#  - Updates here: https://hub.docker.com/r/osrf/ros/tags?name=humble-desktop
 # =============================================================================
-FROM osrf/ros:jazzy-desktop@sha256:20cce785f4b6810985a5a5617d66074d6a76f4ce8dde449d395198051f57cfbe
+FROM osrf/ros:humble-desktop-full@sha256:3af8c05adb340db65eff30d163853177195f91251511909f2fc5fdf839054906
 
 ARG gid
 ARG uid

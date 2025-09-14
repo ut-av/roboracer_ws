@@ -1,0 +1,15 @@
+name: sim 
+root: ~/roboracer_ws
+
+pre_window: ./container shell
+
+windows:
+  - simulator:
+      layout: main-vertical
+      panes:
+        - 
+        - ros2 run ut_automata vesc_driver --config_dir $(ros2 pkg prefix ut_automata)/share/
+        - ros2 run ut_automata joystick --config_dir $(ros2 pkg prefix ut_automata)/share/ut_automata/config/
+        - ros2 run ut_automata websocket
+        - ros2 run ut_automata gui
+        - ros2 launch ut_automata hokuyo_10lx.launch.py

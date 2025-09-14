@@ -10,7 +10,7 @@
 
 ## Setup
 
-This repository is designed to be run in a container based on the ROS2 Jazzy Desktop image.
+This repository is designed to be run in a container based on the ROS2 Humble Desktop image or on the Jetson, a lt4 image with Jetpack.
 
 ### Dependencies
 
