@@ -1,0 +1,24 @@
+name: mono_camera_calibration
+root: ~/roboracer_ws
+
+pre_window: ./container shell
+
+windows:
+  - simulator:
+      layout: main-vertical
+      panes:
+        - 
+        - # camera
+        - ros2 run orin_rp2_csi mono_processor --ros-args -p width:=640 -p height:=480 -p framerate:=30 -p display_mode:="rect"
+        - # lidar
+        - ros2 launch ut_automata hokuyo_10lx.launch.py
+        - # motor driver
+        - ros2 run ut_automata vesc_driver --config_dir $(ros2 pkg prefix ut_automata)/share/
+        - # joystick
+        - ros2 run ut_automata joystick --config_dir $(ros2 pkg prefix ut_automata)/share/ut_automata/config/
+        - # rosbag record, start in paused mode
+        - ros2 bag record --start-pause --all -o $HOME/roboracer_ws/data/$(date +%Y%m%d_%H%M%S)
+        - # websocket
+        - ros2 run ut_automata websocket
+        - # gui
+        - ros2 run ut_automata gui

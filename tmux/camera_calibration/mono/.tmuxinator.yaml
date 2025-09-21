@@ -1,5 +1,13 @@
-name: mono_camera_calibration
+name: mono_cal
 root: ~/roboracer_ws
+
+# Configuration - Change SENSOR_ID to calibrate different cameras
+# SENSOR_ID: 0  # For camera 0
+# SENSOR_ID: 1  # For camera 1
+
+# To run this configuration, run from this folder:
+# SENSOR_ID=0 tmuxinator
+# SENSOR_ID=1 tmuxinator
 
 pre_window: ./container shell
 
@@ -8,7 +16,9 @@ windows:
       layout: main-vertical
       panes:
         - 
-        - ros2 run orin_rp2_csi mono_processor --ros-args -p sensor_id:="0" -p display_mode:=none
+        - 
+          - ros2 run orin_rp2_csi mono_processor --ros-args -p help:=true
+          - ros2 run orin_rp2_csi mono_processor --ros-args -p sensor_id:=<%= ENV['SENSOR_ID'] || '0' %> -p display_mode:=none
         - 
           - sleep 10
-          - ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 image:=/camera_0/image_raw camera:=/camera_0
+          - ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 image:=/camera_<%= ENV['SENSOR_ID'] || '0' %>/image_raw camera:=/camera_<%= ENV['SENSOR_ID'] || '0' %>
