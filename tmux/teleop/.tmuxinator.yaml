@@ -1,4 +1,4 @@
-name: sim 
+name: teleop
 root: ~/roboracer_ws
 
 pre_window: ./container shell

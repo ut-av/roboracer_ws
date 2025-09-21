@@ -1,0 +1,14 @@
+name: mono_camera_calibration
+root: ~/roboracer_ws
+
+pre_window: ./container shell
+
+windows:
+  - simulator:
+      layout: main-vertical
+      panes:
+        - 
+        - ros2 run orin_rp2_csi mono_processor --ros-args -p sensor_id:="0" -p display_mode:=none
+        - 
+          - sleep 10
+          - ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 image:=/camera_0/image_raw camera:=/camera_0
