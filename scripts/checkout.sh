@@ -1,25 +1,42 @@
 #!/bin/bash
 
-THIS_FILE=$(realpath $0)
-ROOT=$(dirname $THIS_FILE)/..
+set -x
+set -e
 
-pushd $ROOT/src/
-if [ ! -d $ROOT/src/amrl_maps ]; then
-  git clone --branch ros2 https://github.com/ut-amrl/amrl_maps.git
-fi
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$(realpath "$THIS_DIR/..")"
+SRC_DIR="$PROJECT_ROOT/src"
 
-if [ ! -d $ROOT/src/amrl_msgs ]; then
-  git clone https://github.com/ut-amrl/amrl_msgs.git
-fi
+cd $SRC_DIR
 
-if [ ! -d $ROOT/src/ut_automata ]; then
-  git clone --branch ros2 git@github.com:ut-amrl/ut_automata.git --recurse-submodules
-fi
+function clone_or_pull {
+    REPO_BRANCH=$1
+    REPO_URL=$2
+    REPO_DIR=$3
+    REPO_DIR="$SRC_DIR/$REPO_DIR"
 
+    if [ -d "$REPO_DIR/.git" ]; then
+        echo "Pulling latest changes for $REPO_DIR"
+        cd "$REPO_DIR"
+        git pull origin "$REPO_BRANCH"
+        git submodule update --init --recursive
+        cd "$SRC_DIR"
+    else
+        echo "Cloning $REPO_URL into $REPO_DIR"
+        git clone -b "$REPO_BRANCH" "$REPO_URL" "$REPO_DIR"
+    fi
+}
+
+# common
+clone_or_pull ros2 https://github.com/ut-amrl/amrl_maps.git
+clone_or_pull master https://github.com/ut-amrl/amrl_msgs.git
+
+# ut_automata
+clone_or_pull ros2 git@github.com:ut-amrl/ut_automata.git
+
+# Realsense
 REALSENSE_VERSION=v2.56.5-l4t36.4.4
-if [ ! -d "$ROOT/external/librealsense" ]; then
-  cd $ROOT/external
-  git clone --branch $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git
-fi
+clone_or_pull $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git
 
-popd
+# MPU6050
+clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git

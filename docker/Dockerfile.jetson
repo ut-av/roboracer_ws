@@ -113,6 +113,29 @@ RUN apt-get update && apt-get install -y \
   mesa-utils-extra \
   && rm -rf /var/lib/apt/lists/*
 
+# =============================================================================
+# MPU6050 Dependencies
+# =============================================================================
+RUN apt-get update && apt-get install -y \
+  libi2c-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# =============================================================================
+# pip
+# =============================================================================
+RUN apt-get update && apt-get install -y \
+  python3-pip \
+  python3-venv \
+  python3-setuptools \
+  python3-wheel \
+  && rm -rf /var/lib/apt/lists/*
+#RUN python3 -m ensurepip --default-pip && python3 -m pip install --upgrade pip
+
+# =============================================================================
+# pytorch
+# =============================================================================
+RUN pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+
 # So we can detect if we are in a container
 ENV CONTAINER_NAME=roboracer_ws
 
@@ -159,6 +182,8 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_maps/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "export ROS_VERSION=2" >> /home/${USERNAME}/.bash_profile && \
     echo "export PS1='\\[\\e[0;32m\\][docker]:\\u@\\h:\\w\\$ \\[\\e[0m\\]'" >> /home/${USERNAME}/.bash_profile && \
+    echo "export LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/torch/lib:/usr/local/cuda/lib64:\$LD_LIBRARY_PATH" >> /home/${USERNAME}/.bash_profile && \
+    echo "export Torch_DIR=/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch:\$Torch_DIR" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
 
 
@@ -174,9 +199,6 @@ WORKDIR /home/$username
 # Python Package Installation
 # =============================================================================
 
-# System pip is being used
-#RUN python3 -m ensurepip --default-pip
-#RUN python3 -m pip install --upgrade pip
 #RUN pip install \
 #  pygame
 #  torch \
@@ -190,8 +212,3 @@ WORKDIR /home/$username
 #  pandas jupyterlab matplotlib seaborn unzip \
 #  scikit-learn \
 #  tqdm
-
-# =============================================================================
-# NumPy Upgrade (separate to ensure compatibility)
-# =============================================================================
-#RUN pip3 install numpy --upgrade

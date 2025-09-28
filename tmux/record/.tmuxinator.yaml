@@ -8,6 +8,8 @@ windows:
       layout: main-vertical
       panes:
         - 
+        - # MPU6050
+        - ros2 launch mpu6050driver mpu6050driver_launch.py
         - # camera
         - ros2 run orin_rp2_csi mono_processor --ros-args -p width:=640 -p height:=480 -p framerate:=30 -p display_mode:="rect"
         - # lidar

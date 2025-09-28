@@ -11,6 +11,7 @@ _UNAME=$(id -un)
 USAGE="$0 [command: build|start|stop|restart|shell|cmd] [container name]"
 
 # Initialize variables
+CONTAINER_FILE=$ROOT/docker/Dockerfile
 DOCKER_COMMAND=""
 CONTAINER_NAME=""
 CMD_TO_RUN=""
@@ -21,6 +22,7 @@ ISJETSON=0
 if command -v nvpmodel &> /dev/null; then
     #echo "This is likely a NVIDIA Jetson device."
     ISJETSON=1
+    CONTAINER_FILE=$ROOT/docker/Dockerfile.jetson
     HOST_FLAGS+=" --runtime nvidia --privileged --ipc=host --cap-add SYS_PTRACE "
 else
     echo ''
@@ -49,7 +51,6 @@ if [[ ! -f $CONTAINER_NAME_FILE ]]; then
   echo $CONTAINER_NAME > $CONTAINER_NAME_FILE
 fi
 
-CONTAINER_FILE=$ROOT/docker/Dockerfile
 _DISPLAY="${DISPLAY-:0}"
 
 RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
