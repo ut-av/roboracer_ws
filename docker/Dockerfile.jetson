@@ -72,9 +72,6 @@ COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
 COPY external/librealsense /tmp/librealsense
 RUN /tmp/install_realsense_library.sh && rm /tmp/install_realsense_library.sh
 
-COPY scripts/ros2_deps.sh /tmp/ros2_deps.sh
-RUN /tmp/ros2_deps.sh && rm /tmp/ros2_deps.sh
-
 # =============================================================================
 # UT AUTOmata dependencies
 # =============================================================================
@@ -135,6 +132,33 @@ RUN apt-get update && apt-get install -y \
 # pytorch
 # =============================================================================
 RUN pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+
+# =============================================================================
+# Libraries for graph nav and enml
+# =============================================================================
+RUN apt-get update && apt-get install -y \
+  libfreeimage3 \
+  libfreeimage-dev \
+  libgtest-dev \
+  libeigen3-dev \
+  libjpeg8-dev \
+  libgoogle-perftools-dev \
+  libsuitesparse-dev \
+  libblas-dev \
+  libopencv-dev \
+  liblapack-dev \
+  libceres-dev \
+  libtbb-dev \
+  libncurses5-dev \
+  libpopt-dev \
+  cimg-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# =============================================================================
+# ROS2 and other dependencies installation scripts
+# =============================================================================
+COPY scripts/ros2_deps.sh /tmp/ros2_deps.sh
+RUN /tmp/ros2_deps.sh && rm /tmp/ros2_deps.sh
 
 # So we can detect if we are in a container
 ENV CONTAINER_NAME=roboracer_ws
