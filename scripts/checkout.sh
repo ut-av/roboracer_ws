@@ -45,4 +45,4 @@ clone_or_pull ros2_dev git@github.com:ut-amrl/enml.git enml
 #clone_or_pull $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git librealsense
 
 # MPU6050
-clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git ros2_mpu6050_driver
+clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver

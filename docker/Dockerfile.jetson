@@ -196,6 +196,39 @@ RUN set -e && \
     # Add the user to the video group for access to video devices
     usermod -aG video ${USERNAME}
 
+# Create groups matching the host's group IDs, handling existing groups
+RUN set -e && \
+    # Handle i2c group (host GID: 116)
+    if getent group 116 >/dev/null 2>&1; then \
+        # Group with GID 116 exists, rename it if it's not i2c
+        existing_group=$(getent group 116 | cut -d: -f1) && \
+        if [ "$existing_group" != "i2c" ]; then \
+            groupmod -n i2c $existing_group; \
+        fi; \
+    elif getent group i2c >/dev/null 2>&1; then \
+        # i2c group exists with different GID, change its GID
+        groupmod -g 116 i2c; \
+    else \
+        # Create new i2c group
+        groupadd -g 116 i2c; \
+    fi && \
+    # Handle dialout group (host GID: 20)
+    if getent group 20 >/dev/null 2>&1; then \
+        # Group with GID 20 exists, rename it if it's not dialout
+        existing_group=$(getent group 20 | cut -d: -f1) && \
+        if [ "$existing_group" != "dialout" ]; then \
+            groupmod -n dialout $existing_group; \
+        fi; \
+    elif getent group dialout >/dev/null 2>&1; then \
+        # dialout group exists with different GID, change its GID
+        groupmod -g 20 dialout; \
+    else \
+        # Create new dialout group
+        groupadd -g 20 dialout; \
+    fi && \
+    # Add user to both groups
+    usermod -aG i2c,dialout ${USERNAME}
+
 RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME}/.bash_profile && \
     echo "export LC_ALL=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "export LANG=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
@@ -208,6 +241,7 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "export PS1='\\[\\e[0;32m\\][docker]:\\u@\\h:\\w\\$ \\[\\e[0m\\]'" >> /home/${USERNAME}/.bash_profile && \
     echo "export LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/torch/lib:/usr/local/cuda/lib64:\$LD_LIBRARY_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "export Torch_DIR=/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch:\$Torch_DIR" >> /home/${USERNAME}/.bash_profile && \
+    echo "export CMAKE_BUILD_MODE=Hardware" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
 
 
