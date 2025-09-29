@@ -1,4 +1,4 @@
-name: mono_cal
+name: camera_calibration
 root: ~/roboracer_ws
 
 # Configuration - Change SENSOR_ID to calibrate different cameras
@@ -8,8 +8,6 @@ root: ~/roboracer_ws
 # To run this configuration, run from this folder:
 # SENSOR_ID=0 tmuxinator
 # SENSOR_ID=1 tmuxinator
-
-pre_window: ./container shell
 
 windows:
   - simulator:

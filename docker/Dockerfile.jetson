@@ -81,6 +81,8 @@ RUN apt-get update && apt-get install -y \
   liblua5.1-0-dev \
   libqt5websockets5-dev \
   libqt5opengl5-dev \
+  tmux \
+  tmuxinator \
   && rm -rf /var/lib/apt/lists/*
 
 # =============================================================================
@@ -244,6 +246,11 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "export CMAKE_BUILD_MODE=Hardware" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
 
+
+# Create .tmux.conf
+RUN echo "set -g mouse on" >> /home/${USERNAME}/.tmux.conf && \
+    echo "set -g history-limit 10000" >> /home/${USERNAME}/.tmux.conf && \
+    chown ${USERNAME}:${GID} /home/${USERNAME}/.tmux.conf
 
 # =============================================================================
 # Switch to User Context
