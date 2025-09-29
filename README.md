@@ -1,5 +1,7 @@
 # Orin ROS2 Workspace
 
+> Note: This repository is designed to be run on an NVIDIA Jetson Orin device (Hardware mode) or in a Ubuntu 22.04 container (Simulation mode). The workspace must be named `roboracer_ws` and be located in the home directory, which the code relies on to find configuration files in the source tree.
+
 ## Firmware flashing and setup is in the [ot_orin_ros2](https://github.com/FRI-Self-Driving/ot_orin_ros2.git) repository.
 
 ## System dependencies
