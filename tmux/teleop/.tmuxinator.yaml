@@ -10,8 +10,8 @@ windows:
         - 
         - ros2 run orin_rp2_csi mono_processor --ros-args -p width:=640 -p height:=480 -p framerate:=30 -p display_mode:="none"
         - ros2 launch mpu6050driver mpu6050driver_launch.py
-        - ros2 run ut_automata vesc_driver --config_dir $(ros2 pkg prefix ut_automata)/share/
-        - ros2 run ut_automata joystick --config_dir $(ros2 pkg prefix ut_automata)/share/ut_automata/config/
+        - ros2 run ut_automata vesc_driver
+        - ros2 run ut_automata joystick
         - ros2 run ut_automata websocket
         - ros2 run ut_automata gui
         - ros2 launch ut_automata hokuyo_10lx.launch.py
