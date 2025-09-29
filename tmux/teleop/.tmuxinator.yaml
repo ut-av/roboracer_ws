@@ -8,10 +8,18 @@ windows:
       layout: main-vertical
       panes:
         - 
-        - ros2 run orin_rp2_csi mono_processor --ros-args -p width:=640 -p height:=480 -p framerate:=30 -p display_mode:="none"
+        - # MPU6050
         - ros2 launch mpu6050driver mpu6050driver_launch.py
-        - ros2 run ut_automata vesc_driver
-        - ros2 run ut_automata joystick
-        - ros2 run ut_automata websocket
-        - ros2 run ut_automata gui
+        - # camera
+        - #ros2 run orin_rp2_csi mono_processor --ros-args -p width:=640 -p height:=480 -p framerate:=30 -p display_mode:="rect"
+        - ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
+        - # lidar
         - ros2 launch ut_automata hokuyo_10lx.launch.py
+        - # motor driver
+        - ros2 run ut_automata vesc_driver
+        - # joystick
+        - ros2 run ut_automata joystick
+        - # websocket
+        - ros2 run ut_automata websocket
+        - # gui
+        - ros2 run ut_automata gui
