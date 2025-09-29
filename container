@@ -102,7 +102,7 @@ dockerstart() {
   # Retry docker run up to 3 times to avoid race when multiple processes try to
   # create the same container name concurrently. If another process created
   # the container between attempts, consider that a success.
-  local max_attempts=3
+  local max_attempts=5
   local attempt=1
   while true; do
     if docker run --rm \
@@ -129,7 +129,7 @@ dockerstart() {
       fi
       echo "Attempt $attempt to start $CONTAINER_NAME failed; retrying..."
       attempt=$((attempt+1))
-      sleep 1
+      sleep 5
     fi
   done
 }
