@@ -13,7 +13,9 @@ function clone_or_pull {
     REPO_BRANCH=$1
     REPO_URL=$2
     REPO_DIR=$3
-    REPO_DIR="$SRC_DIR/$REPO_DIR"
+    # optional 4th arg: base directory where REPO_DIR will be created (defaults to SRC_DIR)
+    REPO_BASE_DIR=${4:-$SRC_DIR}
+    REPO_DIR="$REPO_BASE_DIR/$REPO_DIR"
 
     if [ -d "$REPO_DIR/.git" ]; then
         echo "Pulling latest changes for $REPO_DIR"
@@ -40,9 +42,10 @@ clone_or_pull ros2_dev git@github.com:ut-amrl/graph_navigation.git graph_navigat
 # localization (enml)
 clone_or_pull ros2_dev git@github.com:ut-amrl/enml.git enml
 
-## Realsense
-#REALSENSE_VERSION=v2.56.5-l4t36.4.4
-#clone_or_pull $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git librealsense
+# Realsense
+REALSENSE_VERSION=v2.56.5-l4t36.4.4
+# place librealsense under the project's external directory instead of src
+clone_or_pull $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git librealsense "$PROJECT_ROOT/external"
 
 # MPU6050
 clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver
