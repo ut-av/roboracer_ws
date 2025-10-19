@@ -8,10 +8,9 @@ _GID=$(id -g)
 _UID=$(id -u)
 _UNAME=$(id -un)
 
-USAGE="$0 [command: build|start|stop|restart|shell|cmd] [container name]"
+USAGE="$0 [command: build|start|stop|restart|shell|cmd] [--name container_name]"
 
 # Initialize variables
-CONTAINER_FILE=$ROOT/docker/Dockerfile
 DOCKER_COMMAND=""
 CONTAINER_NAME=""
 CMD_TO_RUN=""
@@ -22,8 +21,7 @@ ISJETSON=0
 if command -v nvpmodel &> /dev/null; then
     #echo "This is likely a NVIDIA Jetson device."
     ISJETSON=1
-    CONTAINER_FILE=$ROOT/docker/Dockerfile.jetson
-    HOST_FLAGS+=" --runtime nvidia --privileged --ipc=host --cap-add SYS_PTRACE "
+    HOST_FLAGS+=" --runtime nvidia --privileged --ipc host --pid host --cap-add SYS_PTRACE "
 else
     echo ''
     #echo "This does not appear to be a NVIDIA Jetson device (nvpmodel not found)."
@@ -36,12 +34,38 @@ if [ -z "$DOCKER_COMMAND" ]; then
   exit
 fi
 
-CONTAINER_NAME=$2
+# Parse arguments
+shift 1  # Remove the command
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --name|-n)
+      CONTAINER_NAME="$2"
+      shift 2
+      ;;
+    *)
+      # For cmd command, remaining args are the command to execute
+      if [ "$DOCKER_COMMAND" = "cmd" ]; then
+        COMMAND_TO_EXEC="$*"
+        break
+      else
+        echo "Unknown argument: $1"
+        echo $USAGE
+        exit 1
+      fi
+      ;;
+  esac
+done
+
 CONTAINER_NAME_FILE=$ROOT/config/name
-if test -f "$CONTAINER_NAME_FILE"; then
-  CONTAINER_NAME="$(cat $CONTAINER_NAME_FILE)"
-  #echo "Container name loaded from $CONTAINER_NAME_FILE: $CONTAINER_NAME"
+
+# If no custom name provided via command line, try to load from file
+if [ -z "$CONTAINER_NAME" ]; then
+  if test -f "$CONTAINER_NAME_FILE"; then
+    CONTAINER_NAME="$(cat $CONTAINER_NAME_FILE)"
+    # echo "Container name loaded from $CONTAINER_NAME_FILE: $CONTAINER_NAME"
+  fi
 fi
+
 if [ -z "$CONTAINER_NAME" ]; then
   echo "Please specify a container name."
   echo $USAGE
@@ -51,10 +75,10 @@ if [[ ! -f $CONTAINER_NAME_FILE ]]; then
   echo $CONTAINER_NAME > $CONTAINER_NAME_FILE
 fi
 
+CONTAINER_FILE=$ROOT/docker/Dockerfile
 _DISPLAY="${DISPLAY-:0}"
 
 RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
-
 
 EXEC="/bin/bash -l"
 MOUNT_DATA=""
@@ -68,14 +92,10 @@ done < "$ROOT/config/ports"
 # host-specific setup
 case "$(uname -s)" in
    Darwin)
-     #echo 'Mac OS X'
+     echo 'Mac OS X'
      ;;
    Linux)
-     #echo 'Linux'
-     set +e
-     xhost +local: 2>/dev/null
-     set -e
-     HOST_FLAGS+=" --gpus all "
+     HOST_FLAGS+="--gpus all"
      HOST_EXEC=$EXEC
      ;;
    CYGWIN*|MINGW32*|MSYS*|MINGW*)
@@ -87,18 +107,24 @@ case "$(uname -s)" in
 esac
 
 dockerbuild() {
+  echo "Building container $CONTAINER_NAME from $CONTAINER_FILE with args:"
+  echo "  GID: $_GID"
+  echo "  UID: $_UID"
+  echo "  UNAME: $_UNAME"
+  echo "  ROOT: $ROOT"
+  echo "  ISJETSON: $ISJETSON"
   docker build \
-    --progress=plain \
     --build-arg gid=$_GID \
     --build-arg uid=$_UID \
     --build-arg username=$_UNAME \
     -t $CONTAINER_NAME \
-    -f $CONTAINER_FILE $ROOT
+    -f docker/Dockerfile $ROOT \
+    --progress=plain
 }
 dockerprune() {
   docker image prune -f
 }
-dockerstart() {
+dockerrun() {
   # Retry docker run up to 3 times to avoid race when multiple processes try to
   # create the same container name concurrently. If another process created
   # the container between attempts, consider that a success.
@@ -132,6 +158,7 @@ dockerstart() {
       sleep 5
     fi
   done
+  echo "Container $CONTAINER_NAME is running with ID $RUNNING_CONTAINER"
 }
 dockerstop() {
   [[ ! -z "$RUNNING_CONTAINER" ]] && docker stop $RUNNING_CONTAINER || echo "$CONTAINER_NAME is not running"
@@ -140,7 +167,8 @@ dockershell() {
   docker exec -it $RUNNING_CONTAINER $EXEC
 }
 dockercmd() {
-  docker exec -it $RUNNING_CONTAINER $EXEC -c "$@"
+  RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
+  docker exec -it $RUNNING_CONTAINER /bin/bash -l -c "$@"
 }
 
 case $DOCKER_COMMAND in
@@ -148,29 +176,47 @@ case $DOCKER_COMMAND in
     dockerbuild
     dockerprune
     dockerstop
-    dockerstart
+    dockerrun
     ;;
   prune)
     dockerprune
     ;;
   start)
-    dockerstart
+    dockerrun
     ;;
   stop)
-    dockerstop
+    if [[ ! -z "$RUNNING_CONTAINER" ]]; then
+      docker stop $RUNNING_CONTAINER
+      docker rm $RUNNING_CONTAINER
+    else
+      echo "$CONTAINER_NAME is not running"
+      # Check if there's a stopped container with the same name and remove it
+      STOPPED_CONTAINER=$(docker container ls -aq --filter name=$CONTAINER_NAME)
+      if [[ ! -z "$STOPPED_CONTAINER" ]]; then
+        echo "Removing stopped container $CONTAINER_NAME"
+        docker rm $STOPPED_CONTAINER
+      fi
+    fi
     ;;
   restart)
     dockerstop
-    dockerstart
+    RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
+    dockerrun
     ;;
   shell)
-    [[ ! -z "$RUNNING_CONTAINER" ]] || dockerstart
+    [[ ! -z "$RUNNING_CONTAINER" ]] || dockerrun
     RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
     dockershell
     ;;
   cmd)
-    while [[ $# -gt 1 ]]; do shift; done
-    dockercmd "$@"
+    # Command was already parsed above
+    if [ -z "$COMMAND_TO_EXEC" ]; then
+      echo "Please specify a command to execute."
+      echo "Usage: $0 cmd [--name container_name] 'command'"
+      exit 1
+    fi
+    [[ ! -z "$RUNNING_CONTAINER" ]] || dockerrun
+    dockercmd "$COMMAND_TO_EXEC"
     ;;
   rm)
     dockerstop
@@ -183,4 +229,3 @@ case $DOCKER_COMMAND in
      exit 1
      ;;
 esac
-

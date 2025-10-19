@@ -14,7 +14,34 @@
 
 This repository is designed to be run in a container based on the ROS2 Humble Desktop image or on the Jetson, a lt4 image with Jetpack.
 
-### Dependencies
+1. Clone this repository into the home directory and name it `roboracer_ws`
+
+```bash
+git clone https://github.com/FRI-Self-Driving/roboracer_ws.git ~/roboracer_ws
+```
+
+2. Run the checkout script to update all dependencies
+
+```bash
+cd ~/roboracer_ws
+./checkout.sh
+```
+
+3. Build the container
+
+```bash
+./container build
+```
+
+4. Enter the container and build the workspace
+
+```bash
+make
+```
+
+### Simulation Dependencies
+
+> Only required for simulation mode (container). Skip this step if running on the Jetson Orin hardware.
 
 Install [docker](https://docs.docker.com/get-docker/) or [podman](https://podman.io/getting-started/installation)
 
