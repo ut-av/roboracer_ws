@@ -114,6 +114,7 @@ dockerbuild() {
   echo "  ROOT: $ROOT"
   echo "  ISJETSON: $ISJETSON"
   docker build \
+    --network=host \
     --build-arg gid=$_GID \
     --build-arg uid=$_UID \
     --build-arg username=$_UNAME \
