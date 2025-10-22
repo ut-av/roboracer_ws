@@ -157,6 +157,13 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 # =============================================================================
+# Utils
+# =============================================================================
+RUN apt-get update && apt-get install -y \
+  vim \
+  && rm -rf /var/lib/apt/lists/*
+
+# =============================================================================
 # ROS2 and other dependencies installation scripts
 # =============================================================================
 COPY scripts/ros2_deps.sh /tmp/ros2_deps.sh
@@ -244,6 +251,7 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "export LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/torch/lib:/usr/local/cuda/lib64:\$LD_LIBRARY_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "export Torch_DIR=/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch:\$Torch_DIR" >> /home/${USERNAME}/.bash_profile && \
     echo "export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST" >> /home/${USERNAME}/.bash_profile && \
+    echo "export ROS_LOCALHOST_ONLY=1" >> /home/${USERNAME}/.bash_profile && \
     echo "export CMAKE_BUILD_MODE=Hardware" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
 
