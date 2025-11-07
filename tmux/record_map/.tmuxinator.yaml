@@ -6,9 +6,7 @@ windows:
       layout: main-vertical
       panes:
         - 
-        - ros2 launch slam_toolbox online_async_launch.p
-        - ros2 launch mpu6050driver mpu6050driver_launch.py
-        - ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
+        - ros2 launch slam_toolbox online_async_launch.py slam_params_file:=params/slam_toolbox/roboracer.yaml use_sim_time:=false
         - ros2 launch ut_automata hokuyo_10lx.launch.py
         - ros2 run ut_automata vesc_driver
         - ros2 run ut_automata joystick
