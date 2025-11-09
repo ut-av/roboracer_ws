@@ -53,5 +53,8 @@ clone_or_pull master git@github.com:ut-av/orin_rp2_csi.git orin_rp2_csi
 # robot description
 clone_or_pull master git@github.com:ut-av/roboracer_description.git roboracer_description
 
+# leg detector
+clone_or_pull master git@github.com:ut-av/leg_detector.git leg_detector
+
 # MPU6050
 clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver
