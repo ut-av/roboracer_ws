@@ -136,6 +136,11 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
 # =============================================================================
+# leg_detector
+# =============================================================================
+RUN pip3 install pykalman
+
+# =============================================================================
 # Libraries for graph nav and enml
 # =============================================================================
 RUN apt-get update && apt-get install -y \
