@@ -21,7 +21,7 @@ ISJETSON=0
 if command -v nvpmodel &> /dev/null; then
     #echo "This is likely a NVIDIA Jetson device."
     ISJETSON=1
-    HOST_FLAGS+=" --runtime nvidia --privileged --ipc host --pid host --cap-add SYS_PTRACE "
+    HOST_FLAGS+=" --runtime nvidia --privileged --ipc=host --pid host --cap-add SYS_PTRACE "
 else
     echo ''
     #echo "This does not appear to be a NVIDIA Jetson device (nvpmodel not found)."

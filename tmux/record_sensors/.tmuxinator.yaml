@@ -1,4 +1,4 @@
-name: record
+name: record_sensors
 root: ~/roboracer_ws
 
 windows:
@@ -6,7 +6,7 @@ windows:
       layout: main-vertical
       panes:
         - 
-        - ros2 bag record --start-pause --all -o $HOME/roboracer_ws/data/$(date +%Y%m%d_%H%M%S)
+        - ros2 launch av_recorder recorder.launch.py
         - ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
         - ros2 launch leg_detector leg_detector.launch.py
         - ros2 launch ut_automata hokuyo_10lx.launch.py

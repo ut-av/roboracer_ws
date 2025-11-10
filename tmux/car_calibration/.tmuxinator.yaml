@@ -1,0 +1,11 @@
+name: car_calibration
+root: ~/roboracer_ws
+
+windows:
+  - simulator:
+      layout: main-vertical
+      panes:
+        - 
+        - ros2 run ut_automata joystick
+        - ros2 run ut_automata vesc_driver
+        - $(ros2 pkg prefix ut_automata)/share/ut_automata/scripts/calibrate.py

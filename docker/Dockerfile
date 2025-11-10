@@ -127,6 +127,7 @@ RUN apt-get update && apt-get install -y \
   python3-venv \
   python3-setuptools \
   python3-wheel \
+  python3-colcon-clean \
   && rm -rf /var/lib/apt/lists/*
 #RUN python3 -m ensurepip --default-pip && python3 -m pip install --upgrade pip
 
@@ -160,6 +161,23 @@ RUN apt-get update && apt-get install -y \
   libpopt-dev \
   cimg-dev \
   && rm -rf /var/lib/apt/lists/*
+
+# # =============================================================================
+# # iceoryx for shared memory communication
+# # =============================================================================
+# RUN apt-get update && apt-get install -y \
+#     cmake \
+#     g++ \
+#     git \
+#     libacl1-dev \
+#     libncurses5-dev \
+#     pkg-config \
+#     && rm -rf /var/lib/apt/lists/*
+# WORKDIR /tmp
+# RUN git clone https://github.com/eclipse-iceoryx/iceoryx.git
+# WORKDIR /tmp/iceoryx
+# RUN cmake -Bbuild -Hiceoryx_meta -DBUILD_ALL=ON -DCMAKE_BUILD_TYPE=Release
+# RUN cmake --build build --target install -j$(nproc)
 
 # =============================================================================
 # Utils
@@ -247,6 +265,9 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "export LC_ALL=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "export LANG=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
     echo "alias killros2='killall -9 ros2 _ros2_daemon rviz2 gzserver robot_state_publisher gzclient controller_server lifecycle_manager'" >> /home/${USERNAME}/.bash_profile && \
+    echo "alias cleanpkgs='colcon clean packages --packages-select '" >> /home/${USERNAME}/.bash_profile && \
+    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> /home/${USERNAME}/.bash_profile && \
+    echo "export CYCLONEDDS_URI=/home/${USERNAME}/roboracer_ws/params/cyclone_dds/unicast.xml" >> /home/${USERNAME}/.bash_profile && \
     echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "source \"/home/${USERNAME}/roboracer_ws/install/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
     echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
@@ -256,7 +277,7 @@ RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME
     echo "export LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/torch/lib:/usr/local/cuda/lib64:\$LD_LIBRARY_PATH" >> /home/${USERNAME}/.bash_profile && \
     echo "export Torch_DIR=/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch:\$Torch_DIR" >> /home/${USERNAME}/.bash_profile && \
     echo "export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST" >> /home/${USERNAME}/.bash_profile && \
-    echo "export ROS_LOCALHOST_ONLY=1" >> /home/${USERNAME}/.bash_profile && \
+    echo "export ROS_LOCALHOST_ONLY=0" >> /home/${USERNAME}/.bash_profile && \
     echo "export CMAKE_BUILD_MODE=Hardware" >> /home/${USERNAME}/.bash_profile && \
     echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
 
