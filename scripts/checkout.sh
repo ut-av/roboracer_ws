@@ -21,12 +21,13 @@ function clone_or_pull {
         echo "Pulling latest changes for $REPO_DIR"
         cd "$REPO_DIR"
         git pull origin "$REPO_BRANCH"
-        git submodule update --init --recursive
-        cd "$SRC_DIR"
     else
         echo "Cloning $REPO_URL into $REPO_DIR"
         git clone -b "$REPO_BRANCH" "$REPO_URL" "$REPO_DIR"
     fi
+    cd "$REPO_DIR"
+    git submodule update --init --recursive
+    cd "$SRC_DIR"
 }
 
 # common
@@ -51,10 +52,16 @@ clone_or_pull $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git 
 clone_or_pull master git@github.com:ut-av/orin_rp2_csi.git orin_rp2_csi
 
 # robot description
-clone_or_pull master git@github.com:ut-av/roboracer_description.git roboracer_description
+clone_or_pull master git@github.com:ut-av/av_description.git av_description
+
+# av_navigation
+clone_or_pull master git@github.com:ut-av/av_navigation.git av_navigation
+
+# av_recorder
+clone_or_pull master git@github.com:ut-av/av_recorder.git av_recorder
 
 # leg detector
-clone_or_pull master git@github.com:ut-av/leg_detector.git leg_detector
+clone_or_pull main git@github.com:ut-av/leg_detector.git leg_detector
 
 # MPU6050
 clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver

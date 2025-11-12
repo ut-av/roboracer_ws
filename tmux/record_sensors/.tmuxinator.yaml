@@ -12,5 +12,5 @@ windows:
         - ros2 launch ut_automata hokuyo_10lx.launch.py
         - ros2 run ut_automata vesc_driver
         - ros2 run ut_automata joystick
-        - ros2 launch roboracer_description description.launch.py
+        - ros2 launch av_description description.launch.py
         - ros2 run ut_automata gui
