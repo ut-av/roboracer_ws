@@ -18,7 +18,8 @@ ARG install_cuda=false
 # =============================================================================
 # For Robot (ARM64/Jetson): Use NVIDIA JetPack base image
 # Note: Stage name uses "arm64" to match Docker's TARGETARCH variable
-FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0 AS base-arm64
+ARG BASE_IMAGE_ARM64
+FROM ${BASE_IMAGE_ARM64} AS base-arm64
 # JetPack container: includes CUDA, cuDNN, TensorRT, VPI, Jetson Multimedia, and so on
 # Alternative ML container with PyTorch, TensorFlow pre-installed:
 # FROM nvcr.io/nvidia/l4t-ml:r36.2.0-py3 AS base-arm64
@@ -122,11 +123,16 @@ RUN rosdep init && \
 FROM ros2-install AS hardware-deps
 
 # Realsense
-RUN apt-get update && apt-get install -y \
-  kmod
+ARG install_cuda
 COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
 COPY external/librealsense /tmp/librealsense
-RUN /tmp/install_realsense_library.sh && rm /tmp/install_realsense_library.sh
+RUN if [ "$install_cuda" = "true" ]; then \
+    apt-get update && apt-get install -y kmod && \
+    /tmp/install_realsense_library.sh && \
+    rm /tmp/install_realsense_library.sh; \
+  else \
+    echo "Skipping Realsense installation (CUDA not found)"; \
+  fi
 
 # MPU6050 Dependencies
 RUN apt-get update && apt-get install -y \

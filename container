@@ -18,7 +18,7 @@ HOST_FLAGS=""
 
 # Auto-detect platform for informational purposes
 ARCH=$(uname -m)
-if [[ "$ARCH" == "aarch64" ]]; then
+if [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
     DETECTED_PLATFORM="arm64"
 elif [[ "$ARCH" == "x86_64" ]]; then
     DETECTED_PLATFORM="amd64"
@@ -127,7 +127,6 @@ dockerbuild() {
       echo "No NVIDIA GPU detected - CUDA will be skipped"
     fi
   fi
-  
   echo "Building container $CONTAINER_NAME from $CONTAINER_FILE with args:"
   echo "  GID: $_GID"
   echo "  UID: $_UID"
@@ -136,6 +135,14 @@ dockerbuild() {
   echo "  PLATFORM: $DETECTED_PLATFORM"
   echo "  ISJETSON: $ISJETSON"
   echo "  INSTALL_CUDA: $INSTALL_CUDA"
+
+  # Select base image for ARM64
+  BASE_IMAGE_ARM64="nvcr.io/nvidia/l4t-jetpack:r36.4.0"
+  if [ "$DETECTED_PLATFORM" = "arm64" ] && [ "$ISJETSON" -eq 0 ]; then
+    echo "Detected non-Jetson ARM64 platform (e.g. macOS). Using Ubuntu 22.04 base image."
+    BASE_IMAGE_ARM64="ubuntu:22.04"
+  fi
+  echo "  BASE_IMAGE_ARM64: $BASE_IMAGE_ARM64"
   
   docker build \
     --network=host \
@@ -143,6 +150,7 @@ dockerbuild() {
     --build-arg uid=$_UID \
     --build-arg username=$_UNAME \
     --build-arg install_cuda=$INSTALL_CUDA \
+    --build-arg BASE_IMAGE_ARM64=$BASE_IMAGE_ARM64 \
     -t $CONTAINER_NAME \
     -f docker/Dockerfile $ROOT \
     --progress=plain
