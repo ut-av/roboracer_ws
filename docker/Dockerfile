@@ -3,17 +3,62 @@
 #  - Docker container must match jetpack version installed on Jetson
 #    - Image list: https://catalog.ngc.nvidia.com/orgs/nvidia/containers/l4t-base/tags
 #  - ROS2 Humble is used for Jetson Orin OpenCV and Python version compatibility
+#  - For native builds: ARM64/Jetson uses l4t-jetpack, AMD64 uses Ubuntu 22.04
 # =============================================================================
+
+# Build arguments
+ARG ros_distro=humble
+ARG gid
+ARG uid
+ARG username
+
+# =============================================================================
+# Stage 1: Platform-Specific Base Images
+# =============================================================================
+# For Robot (ARM64/Jetson): Use NVIDIA JetPack base image
+# Note: Stage name uses "arm64" to match Docker's TARGETARCH variable
+FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0 AS base-arm64
 # JetPack container: includes CUDA, cuDNN, TensorRT, VPI, Jetson Multimedia, and so on
-ARG BASE_IMAGE=nvcr.io/nvidia/l4t-jetpack:r36.4.0
-# ML container: includes TensorFlow, PyTorch, JupyterLab, and other popular ML and data science frameworks such as scikit-learn, scipy, and Pandas pre-installed in a Python environment.
-#ARG BASE_IMAGE=nvcr.io/nvidia/l4t-ml:r36.2.0-py3
-FROM ${BASE_IMAGE}
+# Alternative ML container with PyTorch, TensorFlow pre-installed:
+# FROM nvcr.io/nvidia/l4t-ml:r36.2.0-py3 AS base-arm64
+
+# For Desktop (AMD64/x86_64): Use Ubuntu 22.04 with optional CUDA
+# Note: Stage name uses "amd64" to match Docker's TARGETARCH variable
+FROM ubuntu:22.04 AS base-amd64
+
+# Install CUDA toolkit for Desktop (optional - comment out if not needed)
+# This provides GPU support on Desktop machines with NVIDIA GPUs
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add NVIDIA CUDA repository for Desktop
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
+    dpkg -i cuda-keyring_1.1-1_all.deb && \
+    rm cuda-keyring_1.1-1_all.deb
+
+# Install CUDA toolkit (optional - remove if you don't need GPU support on Desktop)
+RUN apt-get update && apt-get install -y \
+    cuda-toolkit-12-6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# =============================================================================
+# Stage 2: Select Base - Auto-detects platform during native build
+# =============================================================================
+# When building natively on Robot (ARM64), this will pull from base-arm64
+# When building natively on Desktop (AMD64), this will pull from base-amd64
+FROM base-$TARGETARCH AS base-selected
 
 ARG ros_distro=humble
 ARG gid
 ARG uid
 ARG username
+
+# =============================================================================
+# Stage 3: Base Setup - Locale and Essential Tools
+# =============================================================================
+FROM base-selected AS base-setup
 
 # Set non-interactive installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -37,44 +82,62 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup Isaac ROS2 APT repository
+# =============================================================================
+# Stage 4: ROS2 Installation
+# =============================================================================
+FROM base-setup AS ros2-install
+
+ARG ros_distro
+
+# Setup Isaac ROS2 APT repository (ARM64 only, will fail gracefully on AMD64)
 RUN wget -qO - https://isaac.download.nvidia.com/isaac-ros/repos.key | apt-key add - && \
   grep -qxF "deb https://isaac.download.nvidia.com/isaac-ros/release-3 $(lsb_release -cs) release-3.0" /etc/apt/sources.list || \
-  echo "deb https://isaac.download.nvidia.com/isaac-ros/release-3 $(lsb_release -cs) release-3.0" | tee -a /etc/apt/sources.list
+  echo "deb https://isaac.download.nvidia.com/isaac-ros/release-3 $(lsb_release -cs) release-3.0" | tee -a /etc/apt/sources.list || true
 
-# Setup Offical ROS2 APT repository
+# Setup Official ROS2 APT repository
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
 # Install Core ROS 2 Humble packages
 RUN apt-get update && apt-get install -y \
-    ros-humble-desktop-full \
+    ros-${ros_distro}-desktop-full \
     ros-dev-tools \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Isaac ROS common dependencies and VPI
+# Install Isaac ROS common dependencies and VPI (ARM64 only, skip on AMD64)
 # Note: VPI libraries are also part of the Jetson host system and will be mounted.
 # This ensures any additional dependencies are met inside the container.
-RUN apt-get update && apt-get install -y \
-    ros-humble-isaac-ros-common \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    (apt-get install -y ros-${ros_distro}-isaac-ros-common || echo "Isaac ROS not available on this platform") && \
+    rm -rf /var/lib/apt/lists/*
 
 # Initialize rosdep
 RUN rosdep init && \
     rosdep update
 
 # =============================================================================
-# Realsense
+# Stage 5: Hardware Dependencies (Cameras, Sensors)
 # =============================================================================
+FROM ros2-install AS hardware-deps
+
+# Realsense
 RUN apt-get update && apt-get install -y \
   kmod
 COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
 COPY external/librealsense /tmp/librealsense
 RUN /tmp/install_realsense_library.sh && rm /tmp/install_realsense_library.sh
 
+# MPU6050 Dependencies
+RUN apt-get update && apt-get install -y \
+  libi2c-dev \
+  && rm -rf /var/lib/apt/lists/*
+
 # =============================================================================
+# Stage 6: Application Dependencies
+# =============================================================================
+FROM hardware-deps AS app-deps
+
 # UT AUTOmata dependencies
-# =============================================================================
 RUN apt-get update && apt-get install -y \
   libgoogle-glog-dev \
   libgflags-dev \
@@ -85,9 +148,7 @@ RUN apt-get update && apt-get install -y \
   tmuxinator \
   && rm -rf /var/lib/apt/lists/*
 
-# =============================================================================
 # GStreamer (for camera streaming)
-# =============================================================================
 RUN apt-get update && apt-get install -y \
   gstreamer1.0-plugins-base \
   gstreamer1.0-plugins-good \
@@ -98,9 +159,7 @@ RUN apt-get update && apt-get install -y \
   gstreamer1.0-x \
   && rm -rf /var/lib/apt/lists/*
 
-# =============================================================================
 # EGL, OpenGL libraries (for GUI applications)
-# =============================================================================
 RUN apt-get update && apt-get install -y \
   libegl1 \
   libegl1-mesa \
@@ -113,15 +172,11 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 # =============================================================================
-# MPU6050 Dependencies
+# Stage 7: Python and ML Dependencies
 # =============================================================================
-RUN apt-get update && apt-get install -y \
-  libi2c-dev \
-  && rm -rf /var/lib/apt/lists/*
+FROM app-deps AS python-ml
 
-# =============================================================================
 # pip
-# =============================================================================
 RUN apt-get update && apt-get install -y \
   python3-pip \
   python3-venv \
@@ -131,19 +186,20 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 #RUN python3 -m ensurepip --default-pip && python3 -m pip install --upgrade pip
 
-# =============================================================================
-# pytorch
-# =============================================================================
-RUN pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+# pytorch (using CUDA 12.6 compatible version)
+# Note: On ARM64/Jetson, you may need to use a different PyTorch build
+RUN pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126 || \
+    pip3 install torch torchvision torchaudio
 
-# =============================================================================
 # leg_detector
-# =============================================================================
 RUN pip3 install pykalman
 
 # =============================================================================
-# Libraries for graph nav and enml
+# Stage 8: Navigation and SLAM Libraries
 # =============================================================================
+FROM python-ml AS nav-slam
+
+# Libraries for graph nav and enml
 RUN apt-get update && apt-get install -y \
   libfreeimage3 \
   libfreeimage-dev \
@@ -163,7 +219,7 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 # # =============================================================================
-# # iceoryx for shared memory communication
+# # iceoryx for shared memory communication (optional)
 # # =============================================================================
 # RUN apt-get update && apt-get install -y \
 #     cmake \
@@ -180,16 +236,19 @@ RUN apt-get update && apt-get install -y \
 # RUN cmake --build build --target install -j$(nproc)
 
 # =============================================================================
-# Utils
+# Stage 9: Utilities and Additional Scripts
 # =============================================================================
+FROM nav-slam AS utilities
+
+# Utils
 RUN apt-get update && apt-get install -y \
   vim \
   && rm -rf /var/lib/apt/lists/*
-RUN pip3 install jetson-stats
 
-# =============================================================================
+# Jetson-stats (ARM64 only, will fail gracefully on AMD64)
+RUN pip3 install jetson-stats || echo "jetson-stats not available on this platform"
+
 # ROS2 and other dependencies installation scripts
-# =============================================================================
 COPY scripts/ros2_deps.sh /tmp/ros2_deps.sh
 RUN /tmp/ros2_deps.sh && rm /tmp/ros2_deps.sh
 
@@ -197,8 +256,15 @@ RUN /tmp/ros2_deps.sh && rm /tmp/ros2_deps.sh
 ENV CONTAINER_NAME=roboracer_ws
 
 # =============================================================================
-# User Creation and Configuration
+# Stage 10: Final - User Creation and Configuration
 # =============================================================================
+FROM utilities AS final
+
+ARG uid
+ARG gid
+ARG username
+ARG ros_distro
+
 ENV UID=$uid
 ENV GID=$gid
 ENV USERNAME=$username
@@ -262,25 +328,16 @@ RUN set -e && \
     # Add user to both groups
     usermod -aG i2c,dialout ${USERNAME}
 
-RUN echo "export PATH=/home/${USERNAME}/.local/bin/:${PATH}" >> /home/${USERNAME}/.bash_profile && \
-    echo "export LC_ALL=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
-    echo "export LANG=C.UTF-8" >> /home/${USERNAME}/.bash_profile && \
-    echo "alias killros2='killall -9 ros2 _ros2_daemon rviz2 gzserver robot_state_publisher gzclient controller_server lifecycle_manager'" >> /home/${USERNAME}/.bash_profile && \
-    echo "alias cleanpkgs='colcon clean packages --packages-select '" >> /home/${USERNAME}/.bash_profile && \
-    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> /home/${USERNAME}/.bash_profile && \
-    echo "export CYCLONEDDS_URI=/home/${USERNAME}/roboracer_ws/params/cyclone_dds/unicast.xml" >> /home/${USERNAME}/.bash_profile && \
-    echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
-    echo "source \"/home/${USERNAME}/roboracer_ws/install/setup.bash\" --" >> /home/${USERNAME}/.bash_profile && \
-    echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_msgs/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
-    echo "export AMENT_PREFIX_PATH=/home/${USERNAME}/roboracer_ws/src/amrl_maps/install:\$AMENT_PREFIX_PATH" >> /home/${USERNAME}/.bash_profile && \
-    echo "export ROS_VERSION=2" >> /home/${USERNAME}/.bash_profile && \
-    echo "export PS1='\\[\\e[0;32m\\][docker]:\\u@\\h:\\w\\$ \\[\\e[0m\\]'" >> /home/${USERNAME}/.bash_profile && \
-    echo "export LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/torch/lib:/usr/local/cuda/lib64:\$LD_LIBRARY_PATH" >> /home/${USERNAME}/.bash_profile && \
-    echo "export Torch_DIR=/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch:\$Torch_DIR" >> /home/${USERNAME}/.bash_profile && \
-    echo "export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST" >> /home/${USERNAME}/.bash_profile && \
-    echo "export ROS_LOCALHOST_ONLY=0" >> /home/${USERNAME}/.bash_profile && \
-    echo "export CMAKE_BUILD_MODE=Hardware" >> /home/${USERNAME}/.bash_profile && \
-    echo "cd /home/${USERNAME}/roboracer_ws" >> /home/${USERNAME}/.bash_profile
+# Copy bash_profile files and setup script
+COPY docker/bash_profile.shared docker/bash_profile.robot docker/bash_profile.desktop scripts/setup_bash_profile.sh /tmp/
+# Copy local bash_profile if it exists (gitignored, optional)
+# Copy all bash_profile files from docker directory, including optional local one
+COPY docker/bash_profile.* /tmp/
+RUN chmod +x /tmp/setup_bash_profile.sh
+# Combine shared and platform-specific bash_profile based on architecture
+RUN ARCH=$(dpkg --print-architecture) && \
+    /tmp/setup_bash_profile.sh ${ARCH} ${USERNAME} ${ROS_DISTRO} ${GID} && \
+    rm -f /tmp/bash_profile.shared /tmp/bash_profile.robot /tmp/bash_profile.desktop /tmp/bash_profile.local /tmp/setup_bash_profile.sh
 
 
 # Create .tmux.conf

@@ -8,13 +8,23 @@ _GID=$(id -g)
 _UID=$(id -u)
 _UNAME=$(id -un)
 
-USAGE="$0 [command: build|start|stop|restart|shell|cmd] [--name container_name]"
+USAGE="$0 [command: build|start|stop|restart|shell|cmd|rm] [--name container_name]"
 
 # Initialize variables
 DOCKER_COMMAND=""
 CONTAINER_NAME=""
 CMD_TO_RUN=""
 HOST_FLAGS=""
+
+# Auto-detect platform for informational purposes
+ARCH=$(uname -m)
+if [[ "$ARCH" == "aarch64" ]]; then
+    DETECTED_PLATFORM="arm64"
+elif [[ "$ARCH" == "x86_64" ]]; then
+    DETECTED_PLATFORM="amd64"
+else
+    DETECTED_PLATFORM="unknown"
+fi
 
 # Check if we're on a Jetson
 ISJETSON=0
@@ -112,7 +122,9 @@ dockerbuild() {
   echo "  UID: $_UID"
   echo "  UNAME: $_UNAME"
   echo "  ROOT: $ROOT"
+  echo "  PLATFORM: $DETECTED_PLATFORM"
   echo "  ISJETSON: $ISJETSON"
+  
   docker build \
     --network=host \
     --build-arg gid=$_GID \

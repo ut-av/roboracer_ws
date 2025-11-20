@@ -16,4 +16,7 @@ apt-get update && apt-get install -y \
   ros-$ROS_DISTRO-nav2-map-server \
   ros-$ROS_DISTRO-nav2-navfn-planner \
   ros-$ROS_DISTRO-navigation2 \
-  ros-$ROS_DISTRO-foxglove-bridge
+  ros-$ROS_DISTRO-foxglove-bridge && \
+  apt -y upgrade && \
+  rm -rf /var/lib/apt/lists/*
+
