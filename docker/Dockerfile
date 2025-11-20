@@ -194,9 +194,12 @@ RUN apt-get update && apt-get install -y \
 #RUN python3 -m ensurepip --default-pip && python3 -m pip install --upgrade pip
 
 # pytorch (using CUDA 12.6 compatible version)
-# Note: On ARM64/Jetson, you may need to use a different PyTorch build
-RUN pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126 || \
-    pip3 install torch torchvision torchaudio
+ARG install_cuda
+RUN if [ "$install_cuda" = "true" ]; then \
+    pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126; \
+  else \
+    pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu; \
+  fi
 
 # leg_detector
 RUN pip3 install pykalman

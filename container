@@ -93,6 +93,15 @@ RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
 EXEC="/bin/bash -l"
 MOUNT_DATA=""
 while read -r line; do
+    # Skip Jetson-specific mounts if not on Jetson
+    if [ "$ISJETSON" -eq 0 ]; then
+        if [[ "$line" == *"tegra"* ]] || \
+           [[ "$line" == *"nvhost"* ]] || \
+           [[ "$line" == *"nvmap"* ]] || \
+           [[ "$line" == *"argus"* ]]; then
+            continue
+        fi
+    fi
     MOUNT_DATA="${MOUNT_DATA} $(eval echo -e "$line")"
 done < "$ROOT/config/mounts"
 PORT_DATA=""
