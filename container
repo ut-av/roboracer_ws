@@ -117,6 +117,17 @@ case "$(uname -s)" in
 esac
 
 dockerbuild() {
+  # Detect NVIDIA GPU for CUDA installation (Desktop/AMD64 only)
+  INSTALL_CUDA="false"
+  if [ "$DETECTED_PLATFORM" = "amd64" ]; then
+    if command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null; then
+      INSTALL_CUDA="true"
+      echo "NVIDIA GPU detected - CUDA will be installed"
+    else
+      echo "No NVIDIA GPU detected - CUDA will be skipped"
+    fi
+  fi
+  
   echo "Building container $CONTAINER_NAME from $CONTAINER_FILE with args:"
   echo "  GID: $_GID"
   echo "  UID: $_UID"
@@ -124,12 +135,14 @@ dockerbuild() {
   echo "  ROOT: $ROOT"
   echo "  PLATFORM: $DETECTED_PLATFORM"
   echo "  ISJETSON: $ISJETSON"
+  echo "  INSTALL_CUDA: $INSTALL_CUDA"
   
   docker build \
     --network=host \
     --build-arg gid=$_GID \
     --build-arg uid=$_UID \
     --build-arg username=$_UNAME \
+    --build-arg install_cuda=$INSTALL_CUDA \
     -t $CONTAINER_NAME \
     -f docker/Dockerfile $ROOT \
     --progress=plain

@@ -11,6 +11,7 @@ ARG ros_distro=humble
 ARG gid
 ARG uid
 ARG username
+ARG install_cuda=false
 
 # =============================================================================
 # Stage 1: Platform-Specific Base Images
@@ -26,22 +27,22 @@ FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0 AS base-arm64
 # Note: Stage name uses "amd64" to match Docker's TARGETARCH variable
 FROM ubuntu:22.04 AS base-amd64
 
-# Install CUDA toolkit for Desktop (optional - comment out if not needed)
+ARG install_cuda
+
+# Install CUDA toolkit for Desktop only if install_cuda is true
 # This provides GPU support on Desktop machines with NVIDIA GPUs
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg2 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Add NVIDIA CUDA repository for Desktop
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
-    dpkg -i cuda-keyring_1.1-1_all.deb && \
-    rm cuda-keyring_1.1-1_all.deb
-
-# Install CUDA toolkit (optional - remove if you don't need GPU support on Desktop)
-RUN apt-get update && apt-get install -y \
-    cuda-toolkit-12-6 \
-    && rm -rf /var/lib/apt/lists/*
+RUN if [ "$install_cuda" = "true" ]; then \
+        apt-get update && apt-get install -y \
+            wget \
+            gnupg2 \
+            && rm -rf /var/lib/apt/lists/* && \
+        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
+        dpkg -i cuda-keyring_1.1-1_all.deb && \
+        rm cuda-keyring_1.1-1_all.deb && \
+        apt-get update && apt-get install -y \
+            cuda-toolkit-12-6 \
+            && rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # =============================================================================
 # Stage 2: Select Base - Auto-detects platform during native build
