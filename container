@@ -112,6 +112,15 @@ done < "$ROOT/config/ports"
 case "$(uname -s)" in
    Darwin)
      echo 'Mac OS X'
+     # Check for XQuartz
+     if ! command -v xhost &> /dev/null; then
+         echo "Warning: xhost not found. Please install XQuartz (brew install --cask xquartz) and restart your terminal."
+     else
+         # Allow network clients
+         xhost +localhost > /dev/null 2>&1
+     fi
+     # Set DISPLAY for Docker Desktop on Mac
+     _DISPLAY="host.docker.internal:0"
      ;;
    Linux)
      HOST_FLAGS+="--gpus all"
