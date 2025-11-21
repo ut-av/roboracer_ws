@@ -207,8 +207,8 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     ln -s /opt/TurboVNC/bin/* /usr/local/bin/
 
 # Copy VNC startup script
-COPY scripts/start_vnc.sh /usr/local/bin/start_vnc.sh
-RUN chmod +x /usr/local/bin/start_vnc.sh
+COPY scripts/vnc /usr/local/bin/vnc
+RUN chmod +x /usr/local/bin/vnc
 
 # =============================================================================
 # Stage 7: Python and ML Dependencies

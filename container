@@ -8,7 +8,7 @@ _GID=$(id -g)
 _UID=$(id -u)
 _UNAME=$(id -un)
 
-USAGE="$0 [command: build|start|stop|restart|shell|cmd|vnc|rm] [--name container_name]"
+USAGE="$0 [command: build|start|stop|restart|shell|cmd|rm] [--name container_name]"
 
 # Initialize variables
 DOCKER_COMMAND=""
@@ -242,11 +242,6 @@ dockercmd() {
   RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
   docker exec -it $RUNNING_CONTAINER /bin/bash -l -c "$@"
 }
-dockervnc() {
-  [[ ! -z "$RUNNING_CONTAINER" ]] || dockerrun
-  RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
-  docker exec -it $RUNNING_CONTAINER /usr/local/bin/start_vnc.sh
-}
 
 case $DOCKER_COMMAND in
   build)
@@ -294,9 +289,6 @@ case $DOCKER_COMMAND in
     fi
     [[ ! -z "$RUNNING_CONTAINER" ]] || dockerrun
     dockercmd "$COMMAND_TO_EXEC"
-    ;;
-  vnc)
-    dockervnc
     ;;
   rm)
     dockerstop

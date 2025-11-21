@@ -10,6 +10,7 @@
             <ParticipantIndex>auto</ParticipantIndex>
             <MaxAutoParticipantIndex>42</MaxAutoParticipantIndex>
             <Peers>
+                <!-- Put your own Car IP address here -->
                 <Peer Address="10.1.0.112"/>
                 <!-- Put your own Wireguard IP address here -->
                 <Peer Address="10.2.0.1"/>

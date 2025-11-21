@@ -4,7 +4,7 @@ export LANG=C.UTF-8
 alias killros2='killall -9 ros2 _ros2_daemon rviz2 gzserver robot_state_publisher gzclient controller_server lifecycle_manager'
 alias cleanpkgs='colcon clean packages --packages-select '
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI=$HOME/roboracer_ws/params/cyclone_dds/local.xml
+export CYCLONEDDS_URI=$HOME/roboracer_ws/params/cyclone_dds/wg.xml
 export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 export ROS_LOCALHOST_ONLY=0
 
