@@ -343,28 +343,40 @@ RUN set -e && \
 # Create groups matching the host's group IDs, handling existing groups
 RUN set -e && \
     # Handle i2c group (host GID: 116)
-    if getent group 116 >/dev/null 2>&1; then \
-        # Group with GID 116 exists, rename it if it's not i2c
+    if getent group i2c >/dev/null 2>&1 && getent group 116 >/dev/null 2>&1; then \
+        # Both i2c name and GID 116 exist - check if they're the same group
         existing_group=$(getent group 116 | cut -d: -f1) && \
         if [ "$existing_group" != "i2c" ]; then \
+            # Different groups: delete the one with wrong GID, rename the one at 116
+            groupdel i2c && \
             groupmod -n i2c $existing_group; \
         fi; \
+    elif getent group 116 >/dev/null 2>&1; then \
+        # Group with GID 116 exists, rename it to i2c
+        existing_group=$(getent group 116 | cut -d: -f1) && \
+        groupmod -n i2c $existing_group; \
     elif getent group i2c >/dev/null 2>&1; then \
-        # i2c group exists with different GID, change its GID
+        # i2c group exists with different GID, change its GID to 116
         groupmod -g 116 i2c; \
     else \
         # Create new i2c group
         groupadd -g 116 i2c; \
     fi && \
     # Handle dialout group (host GID: 20)
-    if getent group 20 >/dev/null 2>&1; then \
-        # Group with GID 20 exists, rename it if it's not dialout
+    if getent group dialout >/dev/null 2>&1 && getent group 20 >/dev/null 2>&1; then \
+        # Both dialout name and GID 20 exist - check if they're the same group
         existing_group=$(getent group 20 | cut -d: -f1) && \
         if [ "$existing_group" != "dialout" ]; then \
+            # Different groups: delete the one with wrong GID, rename the one at 20
+            groupdel dialout && \
             groupmod -n dialout $existing_group; \
         fi; \
+    elif getent group 20 >/dev/null 2>&1; then \
+        # Group with GID 20 exists, rename it to dialout
+        existing_group=$(getent group 20 | cut -d: -f1) && \
+        groupmod -n dialout $existing_group; \
     elif getent group dialout >/dev/null 2>&1; then \
-        # dialout group exists with different GID, change its GID
+        # dialout group exists with different GID, change its GID to 20
         groupmod -g 20 dialout; \
     else \
         # Create new dialout group
