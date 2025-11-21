@@ -4,9 +4,14 @@ export LANG=C.UTF-8
 alias killros2='killall -9 ros2 _ros2_daemon rviz2 gzserver robot_state_publisher gzclient controller_server lifecycle_manager'
 alias cleanpkgs='colcon clean packages --packages-select '
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI=$HOME/roboracer_ws/params/cyclone_dds/wg.xml
+export CYCLONEDDS_URI=$HOME/roboracer_ws/params/cyclone_dds/tunnel.xml
 export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 export ROS_LOCALHOST_ONLY=0
+
+# Set CAR_IP from environment variable if provided
+if [ -n "$CAR_IP" ]; then
+    export CAR_IP=$CAR_IP
+fi
 
 source "/opt/ros/humble/setup.bash" --
 if [ -f "$HOME/roboracer_ws/install/setup.bash" ]; then

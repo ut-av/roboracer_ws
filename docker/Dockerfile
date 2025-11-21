@@ -391,16 +391,17 @@ RUN set -e && \
     # Add user to both groups
     usermod -aG i2c,dialout ${USERNAME}
 
-# Copy bash_profile files and setup script
-COPY docker/bash_profile.shared docker/bash_profile.robot docker/bash_profile.desktop scripts/setup_bash_profile.sh /tmp/
-# Copy local bash_profile if it exists (gitignored, optional)
-# Copy all bash_profile files from docker directory, including optional local one
-COPY docker/bash_profile.* /tmp/
+# Copy bash_profile files from docker directory
+COPY docker/bash_profile.shared /tmp/
+COPY docker/bash_profile.robot /tmp/
+COPY docker/bash_profile.desktop /tmp/
+# Copy setup script
+COPY scripts/setup_bash_profile.sh /tmp/
 RUN chmod +x /tmp/setup_bash_profile.sh
 # Combine shared and platform-specific bash_profile based on architecture
 RUN ARCH=$(dpkg --print-architecture) && \
     /tmp/setup_bash_profile.sh ${ARCH} ${USERNAME} ${ROS_DISTRO} ${GID} && \
-    rm -f /tmp/bash_profile.shared /tmp/bash_profile.robot /tmp/bash_profile.desktop /tmp/bash_profile.local /tmp/setup_bash_profile.sh
+    rm -f /tmp/bash_profile.shared /tmp/bash_profile.robot /tmp/bash_profile.desktop /tmp/setup_bash_profile.sh
 
 
 # Create .tmux.conf

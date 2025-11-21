@@ -17,10 +17,6 @@ else
     cat /tmp/bash_profile.desktop >> /home/${USERNAME}/.bash_profile
 fi
 
-# Append local configuration if it exists
-if [ -f /tmp/bash_profile.local ]; then
-    cat /tmp/bash_profile.local >> /home/${USERNAME}/.bash_profile
-fi
 
 # Replace placeholders with actual values
 sed -i "s|__USERNAME__|${USERNAME}|g" /home/${USERNAME}/.bash_profile

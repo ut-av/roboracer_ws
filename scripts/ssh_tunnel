@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# SSH Tunnel Script for ROS 2 over WireGuard
+# This script establishes an SSH tunnel to forward ROS 2/DDS traffic to the car
+# Can be run from inside the Docker container or from the host
+
+CAR_USER=orin
+PORT_RANGE_START=7400
+PORT_RANGE_END=7500
+
+echo "==================================="
+echo "ROS 2 SSH Tunnel Setup"
+echo "==================================="
+echo "Car IP: $CAR_IP"
+echo "Car User: $CAR_USER"
+echo "Port Range: $PORT_RANGE_START-$PORT_RANGE_END"
+echo ""
+echo "This will tunnel ROS 2/DDS traffic through SSH."
+echo "Keep this terminal open while using RViz."
+echo "==================================="
+echo ""
+
+if [ -z "$CAR_IP" ]; then
+    echo "Error: CAR_IP environment variable is not set. Please set it in the file config/car_ip before running this script."
+    exit 1
+fi
+
+# Fix SSH key permissions if running in container
+if [ -f "/.dockerenv" ]; then
+    echo "Running inside Docker container..."
+    # Copy SSH directory to container-specific location to avoid permission issues
+    # with mounted read-only directory
+    if [ ! -d "$HOME/.ssh_tunnel" ]; then
+        mkdir -p "$HOME/.ssh_tunnel"
+        cp -r "$HOME/.ssh"/* "$HOME/.ssh_tunnel/" 2>/dev/null || true
+        chmod 700 "$HOME/.ssh_tunnel"
+        chmod 600 "$HOME/.ssh_tunnel"/* 2>/dev/null || true
+    fi
+    SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=$HOME/.ssh_tunnel/known_hosts"
+else
+    echo "Running on host..."
+    SSH_OPTS=""
+fi
+
+# Build the port forwarding arguments
+PORT_FORWARDS=""
+for port in $(seq $PORT_RANGE_START $PORT_RANGE_END); do
+    PORT_FORWARDS="$PORT_FORWARDS -L $port:localhost:$port"
+done
+
+# Establish the SSH tunnel
+echo "Establishing SSH tunnel..."
+echo "Press Ctrl+C to close the tunnel when done."
+echo ""
+
+# Add -N to not execute remote command, keep connection alive
+ssh -N $SSH_OPTS $PORT_FORWARDS "${CAR_USER}@${CAR_IP}"
+

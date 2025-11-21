@@ -85,6 +85,16 @@ if [[ ! -f $CONTAINER_NAME_FILE ]]; then
   echo $CONTAINER_NAME > $CONTAINER_NAME_FILE
 fi
 
+# Read CAR_IP from config file
+CAR_IP_FILE=$ROOT/config/car_ip
+CAR_IP=""
+if test -f "$CAR_IP_FILE"; then
+  CAR_IP="$(cat $CAR_IP_FILE)"
+  echo "CAR_IP loaded from $CAR_IP_FILE: $CAR_IP"
+else
+  echo "Warning: $CAR_IP_FILE not found. CAR_IP will not be set."
+fi
+
 CONTAINER_FILE=$ROOT/docker/Dockerfile
 _DISPLAY="${DISPLAY-:0}"
 
@@ -114,10 +124,7 @@ case "$(uname -s)" in
    Darwin)
      echo 'Mac OS X'
      _DISPLAY=":9"
-     # On macOS, remove --net=host to allow port forwarding for TurboVNC
-     PORT_DATA=${PORT_DATA//--net=host/}
-     PORT_DATA+=" -p 5909:5909"
-     # Remove X11 socket mount for XQuartz
+     # Remove X11 socket mount for XQuartz, use TurboVNC instead
      MOUNT_DATA=${MOUNT_DATA//-v \/tmp\/.X11-unix:\/tmp\/.X11-unix/}
      ;;
    Linux)
@@ -194,13 +201,18 @@ dockerrun() {
   # the container between attempts, consider that a success.
   local max_attempts=5
   local attempt=1
+  # Prepare environment flags
+  local env_flags="-e DISPLAY=$_DISPLAY"
+  if [ -n "$CAR_IP" ]; then
+    env_flags="$env_flags -e CAR_IP=$CAR_IP"
+  fi
   while true; do
     if docker run --rm \
       $HOST_FLAGS \
       $MOUNT_DATA \
       $PORT_DATA \
       --ulimit nofile=65536:65536 \
-      -e DISPLAY=$_DISPLAY \
+      $env_flags \
       -it -d --name=$CONTAINER_NAME $CONTAINER_NAME $HOST_EXEC; then
       # started successfully
       RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
