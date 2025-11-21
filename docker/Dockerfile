@@ -25,21 +25,28 @@ FROM ${BASE_IMAGE_ARM64} AS base-arm64
 # Alternative ML container with PyTorch, TensorFlow pre-installed:
 # FROM nvcr.io/nvidia/l4t-ml:r36.2.0-py3 AS base-arm64
 
+ARG is_jetson
+ARG install_cuda
+
 # NOTE that while the package repositories are not enabled inside the container, jetpack is already installed.
 # To get a list of all packages, check the host by running:
 # cat /var/lib/apt/lists/repo.download.nvidia.com_jetson_common_dists_r36.4_main_binary-arm64_Packages |grep cudnn
-# Install the jetson package repository
-RUN apt-key adv --fetch-key https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
-    echo "deb https://repo.download.nvidia.com/jetson/common r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
-    echo "deb https://repo.download.nvidia.com/jetson/t234 r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
-    echo "deb https://repo.download.nvidia.com/jetson/ffmpeg r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
+# Install the jetson package repository (only on actual Jetson devices)
+RUN if [ "$is_jetson" = "true" ]; then \
+        apt-key adv --fetch-key https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
+        echo "deb https://repo.download.nvidia.com/jetson/common r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+        echo "deb https://repo.download.nvidia.com/jetson/t234 r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+        echo "deb https://repo.download.nvidia.com/jetson/ffmpeg r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list; \
+    fi
 
-# Install cuDNN for Jetson (required for PyTorch)
+# Install cuDNN (only when CUDA is available, required for PyTorch)
 # NOTE cudnn8 is not compatible with latest PyTorch on Jetson, so we install cudnn9
-RUN apt-get update && apt-get install -y \
-    libcudnn9 \
-    libcudnn9-dev \
-    && rm -rf /var/lib/apt/lists/*
+RUN if [ "$install_cuda" = "true" ]; then \
+        apt-get update && apt-get install -y \
+        libcudnn9 \
+        libcudnn9-dev \
+        && rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # For Desktop (AMD64/x86_64): Use Ubuntu 22.04 with optional CUDA
 # Note: Stage name uses "amd64" to match Docker's TARGETARCH variable
