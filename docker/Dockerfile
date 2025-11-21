@@ -82,6 +82,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     gnupg2 \
     lsb-release \
+    iproute2 \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
