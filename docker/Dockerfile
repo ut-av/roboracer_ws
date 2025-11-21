@@ -259,16 +259,22 @@ RUN apt-get update && apt-get install -y \
 # pytorch (using CUDA 12.6 compatible version)
 ARG install_cuda
 ARG is_jetson
-RUN if [ "$is_jetson" = "true" ]; then \
+RUN --mount=type=cache,target=/var/cache/downloads \
+    if [ "$is_jetson" = "true" ]; then \
     # For Jetson: install gfortran and compatible libraries, then use NVIDIA's PyTorch \
     # Installation instructions: https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html
     # Available versions are listed by jetpack version here: https://developer.download.nvidia.com/compute/redist/jp/
-    apt-get update && apt-get install -y gfortran libopenblas-dev && rm -rf /var/lib/apt/lists/* && \
+    if [ ! -f /var/cache/downloads/cusparselt-local-tegra-repo-ubuntu2204-0.8.1_0.8.1-1_arm64.deb ]; then \
+        wget -P /var/cache/downloads https://developer.download.nvidia.com/compute/cusparselt/0.8.1/local_installers/cusparselt-local-tegra-repo-ubuntu2204-0.8.1_0.8.1-1_arm64.deb; \
+    fi && \
+    dpkg -i /var/cache/downloads/cusparselt-local-tegra-repo-ubuntu2204-0.8.1_0.8.1-1_arm64.deb && \
+    cp /var/cusparselt-local-tegra-repo-ubuntu2204-0.8.1/cusparselt-*-keyring.gpg /usr/share/keyrings/ && \
+    apt-get update && apt-get install -y gfortran libopenblas-dev cusparselt && rm -rf /var/lib/apt/lists/* && \
     pip3 install --no-cache-dir https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl; \
   elif [ "$install_cuda" = "true" ]; then \
-    pip3 install torch==2.5.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126; \
+    pip3 install torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 --index-url https://download.pytorch.org/whl/cu124; \
   else \
-    pip3 install torch==2.5.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu; \
+    pip3 install torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 --index-url https://download.pytorch.org/whl/cpu; \
   fi
 
 # leg_detector

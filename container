@@ -10,6 +10,8 @@ _UNAME=$(id -un)
 
 USAGE="$0 [command: build|start|stop|restart|shell|cmd|rm] [--name container_name]"
 
+DOCKER_BUILDKIT=1
+
 # Initialize variables
 DOCKER_COMMAND=""
 CONTAINER_NAME=""
