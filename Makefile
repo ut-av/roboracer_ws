@@ -19,4 +19,8 @@ build:
 		echo "Please install ROS2 and the colcon build tool before proceeding"; \
 		exit 1; \
 	fi
-	colcon build --cmake-args -DCMAKE_BUILD_MODE="Hardware" || exit 1
+	@if command -v nvpmodel >/dev/null 2>&1; then \
+		colcon build --cmake-args -DCMAKE_BUILD_MODE="Hardware" || exit 1; \
+	else \
+		colcon build || exit 1; \
+	fi

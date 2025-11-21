@@ -43,13 +43,23 @@ clone_or_pull ros2_dev git@github.com:ut-amrl/graph_navigation.git graph_navigat
 # localization (enml)
 clone_or_pull ros2_dev git@github.com:ut-amrl/enml.git enml
 
-# Realsense
-REALSENSE_VERSION=v2.56.5-l4t36.4.4
-# place librealsense under the project's external directory instead of src
-clone_or_pull $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git librealsense "$PROJECT_ROOT/external"
+# Check if we are on a Jetson device
+if command -v nvpmodel >/dev/null 2>&1; then
+    echo "Jetson device detected. Checking out hardware repositories."
 
-# RPI-CAM-V2
-clone_or_pull master git@github.com:ut-av/orin_rp2_csi.git orin_rp2_csi
+    # Realsense
+    REALSENSE_VERSION=v2.56.5-l4t36.4.4
+    # place librealsense under the project's external directory instead of src
+    clone_or_pull $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git librealsense "$PROJECT_ROOT/external"
+
+    # RPI-CAM-V2
+    clone_or_pull master git@github.com:ut-av/orin_rp2_csi.git orin_rp2_csi
+
+    # MPU6050
+    clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver
+else
+    echo "Not a Jetson device. Skipping hardware repositories (librealsense, orin_rp2_csi, mpu6050driver)."
+fi
 
 # robot description
 clone_or_pull master git@github.com:ut-av/av_description.git av_description
@@ -62,6 +72,3 @@ clone_or_pull master git@github.com:ut-av/av_recorder.git av_recorder
 
 # leg detector
 clone_or_pull main git@github.com:ut-av/leg_detector.git leg_detector
-
-# MPU6050
-clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver
