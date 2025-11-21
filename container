@@ -113,9 +113,12 @@ done < "$ROOT/config/ports"
 case "$(uname -s)" in
    Darwin)
      echo 'Mac OS X'
+     _DISPLAY=":9"
      # On macOS, remove --net=host to allow port forwarding for TurboVNC
      PORT_DATA=${PORT_DATA//--net=host/}
      PORT_DATA+=" -p 5909:5909"
+     # Remove X11 socket mount for XQuartz
+     MOUNT_DATA=${MOUNT_DATA//-v \/tmp\/.X11-unix:\/tmp\/.X11-unix/}
      ;;
    Linux)
      HOST_FLAGS+="--gpus all"
