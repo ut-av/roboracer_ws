@@ -25,6 +25,22 @@ FROM ${BASE_IMAGE_ARM64} AS base-arm64
 # Alternative ML container with PyTorch, TensorFlow pre-installed:
 # FROM nvcr.io/nvidia/l4t-ml:r36.2.0-py3 AS base-arm64
 
+# NOTE that while the package repositories are not enabled inside the container, jetpack is already installed.
+# To get a list of all packages, check the host by running:
+# cat /var/lib/apt/lists/repo.download.nvidia.com_jetson_common_dists_r36.4_main_binary-arm64_Packages |grep cudnn
+# Install the jetson package repository
+RUN apt-key adv --fetch-key https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
+    echo "deb https://repo.download.nvidia.com/jetson/common r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+    echo "deb https://repo.download.nvidia.com/jetson/t234 r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+    echo "deb https://repo.download.nvidia.com/jetson/ffmpeg r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
+
+# Install cuDNN for Jetson (required for PyTorch)
+# NOTE cudnn8 is not compatible with latest PyTorch on Jetson, so we install cudnn9
+RUN apt-get update && apt-get install -y \
+    libcudnn9 \
+    libcudnn9-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # For Desktop (AMD64/x86_64): Use Ubuntu 22.04 with optional CUDA
 # Note: Stage name uses "amd64" to match Docker's TARGETARCH variable
 FROM ubuntu:22.04 AS base-amd64
@@ -43,6 +59,8 @@ RUN if [ "$install_cuda" = "true" ]; then \
         rm cuda-keyring_1.1-1_all.deb && \
         apt-get update && apt-get install -y \
             cuda-toolkit-12-6 \
+            libcudnn8 \
+            libcudnn8-dev \
             && rm -rf /var/lib/apt/lists/*; \
     fi
 
@@ -129,7 +147,7 @@ RUN rosdep init && \
 # =============================================================================
 FROM ros2-install AS hardware-deps
 
-# Realsense
+# Re-declare build arguments for this stage
 ARG install_cuda
 ARG is_jetson
 COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
@@ -227,12 +245,18 @@ RUN apt-get update && apt-get install -y \
   python3-setuptools \
   python3-wheel \
   python3-colcon-clean \
+  libgfortran5 \
   && rm -rf /var/lib/apt/lists/*
 #RUN python3 -m ensurepip --default-pip && python3 -m pip install --upgrade pip
 
 # pytorch (using CUDA 12.6 compatible version)
 ARG install_cuda
-RUN if [ "$install_cuda" = "true" ]; then \
+ARG is_jetson
+RUN if [ "$is_jetson" = "true" ]; then \
+    # For Jetson: install gfortran and compatible libraries, then use NVIDIA's PyTorch \
+    apt-get update && apt-get install -y gfortran libopenblas-dev && rm -rf /var/lib/apt/lists/* && \
+    pip3 install --no-cache-dir https://developer.download.nvidia.com/compute/redist/jp/v60/pytorch/torch-2.4.0a0+07cecf4168.nv24.05.14710581-cp310-cp310-linux_aarch64.whl; \
+  elif [ "$install_cuda" = "true" ]; then \
     pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126; \
   else \
     pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu; \

@@ -85,10 +85,22 @@ if [[ ! -f $CONTAINER_NAME_FILE ]]; then
   echo $CONTAINER_NAME > $CONTAINER_NAME_FILE
 fi
 
-# Read CAR_IP from config file
+# Read CAR_IP from config file or detect from wg0 interface on Jetson
 CAR_IP_FILE=$ROOT/config/car_ip
 CAR_IP=""
-if test -f "$CAR_IP_FILE"; then
+if [ "$ISJETSON" -eq 1 ]; then
+  # On Jetson, try to get IP from wg0 interface
+  if command -v ip &> /dev/null && ip addr show wg0 &> /dev/null; then
+    CAR_IP=$(ip -4 addr show wg0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    if [ -n "$CAR_IP" ]; then
+      echo "CAR_IP detected from wg0 interface: $CAR_IP"
+    else
+      echo "Warning: wg0 interface found but no IPv4 address detected."
+    fi
+  else
+    echo "Warning: wg0 interface not found on Jetson."
+  fi
+elif test -f "$CAR_IP_FILE"; then
   CAR_IP="$(cat $CAR_IP_FILE)"
   echo "CAR_IP loaded from $CAR_IP_FILE: $CAR_IP"
 else
