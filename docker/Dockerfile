@@ -92,6 +92,7 @@ RUN apt-get update && apt-get install -y \
 FROM base-setup AS ros2-install
 
 ARG ros_distro
+ARG is_jetson
 
 # Setup Isaac ROS2 APT repository (ARM64 only, will fail gracefully on AMD64)
 RUN if [ "$is_jetson" = "true" ]; then \
@@ -130,6 +131,7 @@ FROM ros2-install AS hardware-deps
 
 # Realsense
 ARG install_cuda
+ARG is_jetson
 COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
 COPY external/librealsense /tmp/librealsense
 RUN if [ "$is_jetson" = "true" ]; then \
@@ -216,6 +218,8 @@ RUN chmod +x /usr/local/bin/vnc
 # =============================================================================
 FROM app-deps AS python-ml
 
+ARG install_cuda
+
 # pip
 RUN apt-get update && apt-get install -y \
   python3-pip \
@@ -282,6 +286,8 @@ RUN apt-get update && apt-get install -y \
 # Stage 9: Utilities and Additional Scripts
 # =============================================================================
 FROM nav-slam AS utilities
+
+ARG is_jetson
 
 # Utils
 RUN apt-get update && apt-get install -y \
