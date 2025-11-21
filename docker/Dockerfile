@@ -261,12 +261,14 @@ ARG install_cuda
 ARG is_jetson
 RUN if [ "$is_jetson" = "true" ]; then \
     # For Jetson: install gfortran and compatible libraries, then use NVIDIA's PyTorch \
+    # Installation instructions: https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html
+    # Available versions are listed by jetpack version here: https://developer.download.nvidia.com/compute/redist/jp/
     apt-get update && apt-get install -y gfortran libopenblas-dev && rm -rf /var/lib/apt/lists/* && \
-    pip3 install --no-cache-dir https://developer.download.nvidia.com/compute/redist/jp/v60/pytorch/torch-2.4.0a0+07cecf4168.nv24.05.14710581-cp310-cp310-linux_aarch64.whl; \
+    pip3 install --no-cache-dir https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl; \
   elif [ "$install_cuda" = "true" ]; then \
-    pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126; \
+    pip3 install torch==2.5.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126; \
   else \
-    pip3 install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu; \
+    pip3 install torch==2.5.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu; \
   fi
 
 # leg_detector
