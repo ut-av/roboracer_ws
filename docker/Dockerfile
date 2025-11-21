@@ -189,6 +189,27 @@ RUN apt-get update && apt-get install -y \
   mesa-utils-extra \
   && rm -rf /var/lib/apt/lists/*
 
+# Install Xfce4 and TurboVNC
+RUN apt-get update && apt-get install -y \
+    xfce4 \
+    xfce4-goodies \
+    dbus-x11 \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG TARGETARCH
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+      wget https://github.com/TurboVNC/turbovnc/releases/download/3.2.1/turbovnc_3.2.1_amd64.deb -O /tmp/turbovnc.deb; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+      wget https://github.com/TurboVNC/turbovnc/releases/download/3.2.1/turbovnc_3.2.1_arm64.deb -O /tmp/turbovnc.deb; \
+    fi && \
+    dpkg -i /tmp/turbovnc.deb && \
+    rm /tmp/turbovnc.deb && \
+    ln -s /opt/TurboVNC/bin/* /usr/local/bin/
+
+# Copy VNC startup script
+COPY scripts/start_vnc.sh /usr/local/bin/start_vnc.sh
+RUN chmod +x /usr/local/bin/start_vnc.sh
+
 # =============================================================================
 # Stage 7: Python and ML Dependencies
 # =============================================================================

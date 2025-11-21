@@ -8,7 +8,7 @@ _GID=$(id -g)
 _UID=$(id -u)
 _UNAME=$(id -un)
 
-USAGE="$0 [command: build|start|stop|restart|shell|cmd|rm] [--name container_name]"
+USAGE="$0 [command: build|start|stop|restart|shell|cmd|vnc|rm] [--name container_name]"
 
 # Initialize variables
 DOCKER_COMMAND=""
@@ -108,31 +108,14 @@ PORT_DATA=""
 while read -r line; do
     PORT_DATA="${PORT_DATA} $(eval echo -e "$line")"
 done < "$ROOT/config/ports"
+
 # host-specific setup
 case "$(uname -s)" in
    Darwin)
      echo 'Mac OS X'
-     # Check for XQuartz
-     if ! command -v xhost &> /dev/null; then
-         echo "Warning: xhost not found. Please install XQuartz (brew install --cask xquartz) and restart your terminal."
-     else
-         # Check if XQuartz is allowing network connections (listening on port 6000)
-         if ! lsof -i :6000 -sTCP:LISTEN -n -P &> /dev/null && ! netstat -an | grep -q "\.6000.*LISTEN"; then
-             echo "Warning: XQuartz does not appear to be listening on TCP port 6000."
-             echo "  Please ensure 'Allow connections from network clients' is enabled in XQuartz > Settings > Security."
-             echo "  You MUST restart XQuartz after changing this setting."
-         fi
-         # Allow network clients
-         xhost +localhost > /dev/null 2>&1
-         xhost +127.0.0.1 > /dev/null 2>&1
-     fi
-     # Set DISPLAY for Docker Desktop on Mac
-     _DISPLAY="host.docker.internal:0"
-     # Force software rendering for XQuartz compatibility
-     # LIBGL_ALWAYS_SOFTWARE=1 forces Mesa to use the llvmpipe driver (CPU rendering)
-     # MESA_GL_VERSION_OVERRIDE=3.3 ensures Ogre gets a compatible context
-     # QT_X11_NO_MITSHM=1 is required because shared memory doesn't work over network
-     HOST_FLAGS+=" -e MESA_GL_VERSION_OVERRIDE=3.3 -e QT_X11_NO_MITSHM=1 -e LIBGL_ALWAYS_INDIRECT=1"
+     # On macOS, remove --net=host to allow port forwarding for TurboVNC
+     PORT_DATA=${PORT_DATA//--net=host/}
+     PORT_DATA+=" -p 5909:5909"
      ;;
    Linux)
      HOST_FLAGS+="--gpus all"
@@ -256,6 +239,11 @@ dockercmd() {
   RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
   docker exec -it $RUNNING_CONTAINER /bin/bash -l -c "$@"
 }
+dockervnc() {
+  [[ ! -z "$RUNNING_CONTAINER" ]] || dockerrun
+  RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
+  docker exec -it $RUNNING_CONTAINER /usr/local/bin/start_vnc.sh
+}
 
 case $DOCKER_COMMAND in
   build)
@@ -303,6 +291,9 @@ case $DOCKER_COMMAND in
     fi
     [[ ! -z "$RUNNING_CONTAINER" ]] || dockerrun
     dockercmd "$COMMAND_TO_EXEC"
+    ;;
+  vnc)
+    dockervnc
     ;;
   rm)
     dockerstop
