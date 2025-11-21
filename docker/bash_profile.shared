@@ -7,8 +7,11 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export CYCLONEDDS_URI=$HOME/roboracer_ws/params/cyclone_dds/local.xml
 export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 export ROS_LOCALHOST_ONLY=0
+
 source "/opt/ros/humble/setup.bash" --
-source "$HOME/roboracer_ws/install/setup.bash" --
+if [ -f "$HOME/roboracer_ws/install/setup.bash" ]; then
+    source "$HOME/roboracer_ws/install/setup.bash" --
+fi
 export AMENT_PREFIX_PATH=$HOME/roboracer_ws/src/amrl_msgs/install:$AMENT_PREFIX_PATH
 export AMENT_PREFIX_PATH=$HOME/roboracer_ws/src/amrl_maps/install:$AMENT_PREFIX_PATH
 export ROS_VERSION=2

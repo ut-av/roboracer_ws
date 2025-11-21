@@ -12,13 +12,14 @@ ARG gid
 ARG uid
 ARG username
 ARG install_cuda=false
+ARG is_jetson=false
 
 # =============================================================================
 # Stage 1: Platform-Specific Base Images
 # =============================================================================
 # For Robot (ARM64/Jetson): Use NVIDIA JetPack base image
 # Note: Stage name uses "arm64" to match Docker's TARGETARCH variable
-ARG BASE_IMAGE_ARM64
+ARG BASE_IMAGE_ARM64=nvcr.io/nvidia/l4t-jetpack:r36.4.0
 FROM ${BASE_IMAGE_ARM64} AS base-arm64
 # JetPack container: includes CUDA, cuDNN, TensorRT, VPI, Jetson Multimedia, and so on
 # Alternative ML container with PyTorch, TensorFlow pre-installed:
@@ -92,9 +93,11 @@ FROM base-setup AS ros2-install
 ARG ros_distro
 
 # Setup Isaac ROS2 APT repository (ARM64 only, will fail gracefully on AMD64)
-RUN wget -qO - https://isaac.download.nvidia.com/isaac-ros/repos.key | apt-key add - && \
+RUN if [ "$is_jetson" = "true" ]; then \
+  wget -qO - https://isaac.download.nvidia.com/isaac-ros/repos.key | apt-key add - && \
   grep -qxF "deb https://isaac.download.nvidia.com/isaac-ros/release-3 $(lsb_release -cs) release-3.0" /etc/apt/sources.list || \
-  echo "deb https://isaac.download.nvidia.com/isaac-ros/release-3 $(lsb_release -cs) release-3.0" | tee -a /etc/apt/sources.list || true
+  echo "deb https://isaac.download.nvidia.com/isaac-ros/release-3 $(lsb_release -cs) release-3.0" | tee -a /etc/apt/sources.list || true; \
+fi
 
 # Setup Official ROS2 APT repository
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
@@ -109,9 +112,11 @@ RUN apt-get update && apt-get install -y \
 # Install Isaac ROS common dependencies and VPI (ARM64 only, skip on AMD64)
 # Note: VPI libraries are also part of the Jetson host system and will be mounted.
 # This ensures any additional dependencies are met inside the container.
-RUN apt-get update && \
+RUN if [ "$is_jetson" = "true" ]; then \
+    apt-get update && \
     (apt-get install -y ros-${ros_distro}-isaac-ros-common || echo "Isaac ROS not available on this platform") && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*; \
+fi
 
 # Initialize rosdep
 RUN rosdep init && \
@@ -126,18 +131,24 @@ FROM ros2-install AS hardware-deps
 ARG install_cuda
 COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
 COPY external/librealsense /tmp/librealsense
-RUN if [ "$install_cuda" = "true" ]; then \
+RUN if [ "$is_jetson" = "true" ]; then \
+  if [ "$install_cuda" = "true" ]; then \
     apt-get update && apt-get install -y kmod && \
     /tmp/install_realsense_library.sh && \
     rm /tmp/install_realsense_library.sh; \
   else \
     echo "Skipping Realsense installation (CUDA not found)"; \
-  fi
+  fi; \
+else \
+  echo "Skipping Realsense installation (Not on Jetson)"; \
+fi
 
 # MPU6050 Dependencies
-RUN apt-get update && apt-get install -y \
+RUN if [ "$is_jetson" = "true" ]; then \
+  apt-get update && apt-get install -y \
   libi2c-dev \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*; \
+fi
 
 # =============================================================================
 # Stage 6: Application Dependencies
@@ -256,7 +267,9 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 # Jetson-stats (ARM64 only, will fail gracefully on AMD64)
-RUN pip3 install jetson-stats || echo "jetson-stats not available on this platform"
+RUN if [ "$is_jetson" = "true" ]; then \
+    pip3 install jetson-stats || echo "jetson-stats not available on this platform"; \
+fi
 
 # ROS2 and other dependencies installation scripts
 COPY scripts/ros2_deps.sh /tmp/ros2_deps.sh
