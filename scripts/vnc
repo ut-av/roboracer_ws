@@ -32,4 +32,15 @@ RESOLUTION=${VNC_RESOLUTION:-1920x1080}
 echo "Starting TurboVNC server on :9 with resolution $RESOLUTION..."
 /opt/TurboVNC/bin/vncserver :9 -geometry $RESOLUTION -depth 24 -securitytypes VNC -xstartup $HOME/.vnc/xstartup.turbovnc
 
-echo "VNC Server started. Connect to localhost:5909"
+# Display connection info based on platform
+if command -v nvpmodel &> /dev/null; then
+    # On Jetson, show CAR_IP if available
+    if [ -n "$CAR_IP" ]; then
+        echo "VNC Server started. Connect to $CAR_IP:5909"
+    else
+        echo "VNC Server started on :9 (port 5909)"
+    fi
+else
+    # On other platforms (e.g., macOS), show localhost
+    echo "VNC Server started. Connect to localhost:5909"
+fi
