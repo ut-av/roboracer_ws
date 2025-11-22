@@ -138,6 +138,10 @@ case "$(uname -s)" in
    Darwin)
      echo 'Mac OS X'
      _DISPLAY=":9"
+     # Host mode on macos does not work, remove this option, loaded from the ports config file
+     PORT_DATA=${PORT_DATA//--net=host/}
+     # instead just forward the TurboVNC port
+     PORT_DATA+="-p 5909:5909"
      # Remove X11 socket mount for XQuartz, use TurboVNC instead
      MOUNT_DATA=${MOUNT_DATA//-v \/tmp\/.X11-unix:\/tmp\/.X11-unix/}
      ;;

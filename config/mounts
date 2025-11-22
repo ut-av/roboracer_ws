@@ -1,6 +1,6 @@
 -v $ROOT:/home/$_UNAME/$(basename -- $ROOT)
 -v $HOME/librealsense:/home/$_UNAME/librealsense
--v $HOME/.ssh:/home/$_UNAME/.ssh:ro
+-v $HOME/.ssh/authorized_keys:/home/$_UNAME/.ssh/authorized_keys
 -v $HOME/.bash_history:/home/$_UNAME/.bash_history
 -v /tmp/.X11-unix:/tmp/.X11-unix
 -v /tmp/argus_socket:/tmp/argus_socket
