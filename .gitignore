@@ -1,5 +1,4 @@
 bin
-databags
 experiments
 build.lock
 yarn-error.log
