@@ -38,10 +38,10 @@ clone_or_pull master https://github.com/ut-amrl/amrl_msgs.git amrl_msgs
 clone_or_pull ros2 git@github.com:ut-amrl/ut_automata.git ut_automata
 
 # graph nav
-clone_or_pull ros2_dev git@github.com:ut-amrl/graph_navigation.git graph_navigation
+#clone_or_pull ros2_dev git@github.com:ut-amrl/graph_navigation.git graph_navigation
 
 # localization (enml)
-clone_or_pull ros2_dev git@github.com:ut-amrl/enml.git enml
+#clone_or_pull ros2_dev git@github.com:ut-amrl/enml.git enml
 
 # Check if we are on a Jetson device
 if command -v nvpmodel >/dev/null 2>&1; then

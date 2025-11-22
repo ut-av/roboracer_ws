@@ -18,8 +18,8 @@ build:
 		echo "Error: A ROS2 installation including the 'colcon' build tool is required"; \
 		echo "Please install ROS2 and the colcon build tool before proceeding"; \
 		exit 1; \
-	fi
-	@if command -v nvpmodel >/dev/null 2>&1; then \
+	fi; \
+	if [ -n "$$JETSON_MODEL" ]; then \
 		colcon build --cmake-args -DCMAKE_BUILD_MODE="Hardware" || exit 1; \
 	else \
 		colcon build || exit 1; \

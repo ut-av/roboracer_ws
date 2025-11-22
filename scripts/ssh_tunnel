@@ -45,7 +45,7 @@ fi
 # Build the port forwarding arguments
 PORT_FORWARDS=""
 for port in $(seq $PORT_RANGE_START $PORT_RANGE_END); do
-    PORT_FORWARDS="$PORT_FORWARDS -L $port:localhost:$port"
+    PORT_FORWARDS="$PORT_FORWARDS -L $port:localhost:$port -R $port:localhost:$port"
 done
 
 # Establish the SSH tunnel

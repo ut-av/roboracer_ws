@@ -259,6 +259,7 @@ RUN apt-get update && apt-get install -y \
 # pytorch (using CUDA 12.6 compatible version)
 ARG install_cuda
 ARG is_jetson
+# if this step fails, run `docker builder prune`
 RUN --mount=type=cache,target=/var/cache/downloads \
     if [ "$is_jetson" = "true" ]; then \
     # For Jetson: install gfortran and compatible libraries, then use NVIDIA's PyTorch \
