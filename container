@@ -211,6 +211,7 @@ dockerbuild() {
   else
     BASE_STAGE_NAME="base_arm64"
   fi
+  echo "  BASE_STAGE_NAME: $BASE_STAGE_NAME"
 
   docker build \
     --network=host \

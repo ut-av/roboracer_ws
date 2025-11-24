@@ -13,6 +13,7 @@ ARG uid
 ARG username
 ARG install_cuda=false
 ARG is_jetson=false
+ARG BASE_STAGE_NAME=base_amd64
 
 # =============================================================================
 # Stage 1: Platform-Specific Base Images
