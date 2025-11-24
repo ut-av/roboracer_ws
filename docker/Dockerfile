@@ -20,7 +20,7 @@ ARG is_jetson=false
 # For Robot (ARM64/Jetson): Use NVIDIA JetPack base image
 # Note: Stage name uses "arm64" to match Docker's TARGETARCH variable
 ARG BASE_IMAGE_ARM64=nvcr.io/nvidia/l4t-jetpack:r36.4.0
-FROM ${BASE_IMAGE_ARM64} AS base-arm64
+FROM ${BASE_IMAGE_ARM64} AS base_arm64
 # JetPack container: includes CUDA, cuDNN, TensorRT, VPI, Jetson Multimedia, and so on
 # Alternative ML container with PyTorch, TensorFlow pre-installed:
 # FROM nvcr.io/nvidia/l4t-ml:r36.2.0-py3 AS base-arm64
@@ -50,7 +50,7 @@ RUN if [ "$install_cuda" = "true" ]; then \
 
 # For Desktop (AMD64/x86_64): Use Ubuntu 22.04 with optional CUDA
 # Note: Stage name uses "amd64" to match Docker's TARGETARCH variable
-FROM ubuntu:22.04 AS base-amd64
+FROM ubuntu:22.04 AS base_amd64
 
 ARG install_cuda
 
@@ -78,7 +78,8 @@ RUN if [ "$install_cuda" = "true" ]; then \
 # =============================================================================
 # When building natively on Robot (ARM64), this will pull from base-arm64
 # When building natively on Desktop (AMD64), this will pull from base-amd64
-FROM base-$TARGETARCH AS base-selected
+ARG BASE_STAGE_NAME
+FROM $BASE_STAGE_NAME AS base-selected
 
 ARG ros_distro=humble
 ARG gid

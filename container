@@ -11,6 +11,7 @@ _UNAME=$(id -un)
 USAGE="$0 [command: build|start|stop|restart|shell|cmd|rm] [--name container_name]"
 
 DOCKER_BUILDKIT=1
+export BUILDAH_FORMAT=docker
 
 # Initialize variables
 DOCKER_COMMAND=""
@@ -204,6 +205,13 @@ dockerbuild() {
   fi
   echo "  IS_JETSON_BOOL: $IS_JETSON_BOOL"
 
+  # Determine base stage name
+  if [ "$DETECTED_PLATFORM" = "amd64" ]; then
+    BASE_STAGE_NAME="base_amd64"
+  else
+    BASE_STAGE_NAME="base_arm64"
+  fi
+
   docker build \
     --network=host \
     --build-arg gid=$_GID \
@@ -212,6 +220,7 @@ dockerbuild() {
     --build-arg install_cuda=$INSTALL_CUDA \
     --build-arg BASE_IMAGE_ARM64=$BASE_IMAGE_ARM64 \
     --build-arg is_jetson=$IS_JETSON_BOOL \
+    --build-arg BASE_STAGE_NAME=$BASE_STAGE_NAME \
     -t $CONTAINER_NAME \
     -f docker/Dockerfile $ROOT \
     --progress=plain
