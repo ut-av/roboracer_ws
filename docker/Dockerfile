@@ -56,7 +56,9 @@ ARG install_cuda
 
 # Install CUDA toolkit for Desktop only if install_cuda is true
 # This provides GPU support on Desktop machines with NVIDIA GPUs
+COPY scripts/detect_gpu_setup.sh /tmp/detect_gpu_setup.sh
 RUN if [ "$install_cuda" = "true" ]; then \
+        . /tmp/detect_gpu_setup.sh && \
         apt-get update && apt-get install -y \
             wget \
             gnupg2 \
@@ -65,7 +67,7 @@ RUN if [ "$install_cuda" = "true" ]; then \
         dpkg -i cuda-keyring_1.1-1_all.deb && \
         rm cuda-keyring_1.1-1_all.deb && \
         apt-get update && apt-get install -y \
-            cuda-toolkit-12-6 \
+            ${CUDA_TOOLKIT_PKG} \
             libcudnn8 \
             libcudnn8-dev \
             && rm -rf /var/lib/apt/lists/*; \
@@ -261,7 +263,7 @@ ARG install_cuda
 ARG is_jetson
 # if this step fails, run `docker builder prune`
 RUN --mount=type=cache,target=/var/cache/downloads \
-    if [ "$is_jetson" = "true" ]; then \
+  if [ "$is_jetson" = "true" ]; then \
     # For Jetson: install gfortran and compatible libraries, then use NVIDIA's PyTorch \
     # Installation instructions: https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html
     # Available versions are listed by jetpack version here: https://developer.download.nvidia.com/compute/redist/jp/
@@ -273,9 +275,11 @@ RUN --mount=type=cache,target=/var/cache/downloads \
     apt-get update && apt-get install -y gfortran libopenblas-dev cusparselt && rm -rf /var/lib/apt/lists/* && \
     pip3 install --no-cache-dir https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl; \
   elif [ "$install_cuda" = "true" ]; then \
-    pip3 install torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 --index-url https://download.pytorch.org/whl/cu124; \
+    . /tmp/detect_gpu_setup.sh && \
+    pip3 install torch==${PT_VER} torchvision==${VIS_VER} torchaudio==${AUD_VER} --index-url https://download.pytorch.org/whl/${CUDA_TAG}; \
   else \
-    pip3 install torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 --index-url https://download.pytorch.org/whl/cpu; \
+    # CPU Fallback
+    pip3 install torch==${PT_VER} torchvision==${VIS_VER} torchaudio==${AUD_VER} --index-url https://download.pytorch.org/whl/cpu; \
   fi
 
 # leg_detector
