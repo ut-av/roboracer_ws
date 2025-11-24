@@ -72,3 +72,6 @@ clone_or_pull master git@github.com:ut-av/av_recorder.git av_recorder
 
 # leg detector
 clone_or_pull main git@github.com:ut-av/leg_detector.git leg_detector
+
+# imitation learning
+clone_or_pull master git@github.com:ut-av/av_imitation.git av_imitation

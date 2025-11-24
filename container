@@ -39,6 +39,12 @@ else
     #echo "This does not appear to be a NVIDIA Jetson device (nvpmodel not found)."
 fi
 
+# Check if a container name is already set in the ENV
+if [ -n "$IN_CONTAINER_NAME" ]; then
+    echo "Already in container $IN_CONTAINER_NAME, you can now run your command."
+    exit
+fi
+
 DOCKER_COMMAND=$1
 if [ -z "$DOCKER_COMMAND" ]; then
   echo "Please specify a command."
@@ -220,7 +226,7 @@ dockerrun() {
   local max_attempts=5
   local attempt=1
   # Prepare environment flags
-  local env_flags="-e DISPLAY=$_DISPLAY"
+  local env_flags="-e DISPLAY=$_DISPLAY -e IN_CONTAINER_NAME=$CONTAINER_NAME"
   if [ -n "$CAR_IP" ]; then
     env_flags="$env_flags -e CAR_IP=$CAR_IP"
   fi

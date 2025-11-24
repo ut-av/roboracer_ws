@@ -1,18 +1,21 @@
 export PATH=$HOME/.local/bin/:${PATH}
 export LC_ALL=C.UTF-8
 export LANG=C.UTF-8
+
+# PyTorch
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+# ROS
 alias killros2='killall -9 ros2 _ros2_daemon rviz2 gzserver robot_state_publisher gzclient controller_server lifecycle_manager'
 alias cleanpkgs='colcon clean packages --packages-select '
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export CYCLONEDDS_URI=$HOME/roboracer_ws/params/cyclone_dds/local.xml
 export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 export ROS_LOCALHOST_ONLY=0
-
 # Set CAR_IP from environment variable if provided
 if [ -n "$CAR_IP" ]; then
     export CAR_IP=$CAR_IP
 fi
-
 source "/opt/ros/humble/setup.bash" --
 if [ -f "$HOME/roboracer_ws/install/setup.bash" ]; then
     source "$HOME/roboracer_ws/install/setup.bash" --
@@ -21,5 +24,5 @@ export AMENT_PREFIX_PATH=$HOME/roboracer_ws/src/amrl_msgs/install:$AMENT_PREFIX_
 export AMENT_PREFIX_PATH=$HOME/roboracer_ws/src/amrl_maps/install:$AMENT_PREFIX_PATH
 export ROS_VERSION=2
 export PS1='\[\e[0;32m\][docker]:\u@\h:\w$ \[\e[0m\]'
-cd $HOME/roboracer_ws
 
+cd $HOME/roboracer_ws

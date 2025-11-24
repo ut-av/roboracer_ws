@@ -343,9 +343,6 @@ fi
 COPY scripts/ros2_deps.sh /tmp/ros2_deps.sh
 RUN /tmp/ros2_deps.sh && rm /tmp/ros2_deps.sh
 
-# So we can detect if we are in a container
-ENV CONTAINER_NAME=roboracer_ws
-
 # =============================================================================
 # Stage 10: Final - User Creation and Configuration
 # =============================================================================
@@ -456,3 +453,13 @@ RUN echo "set -g mouse on" >> /home/${USERNAME}/.tmux.conf && \
 USER $username
 ENV HOME=/home/$username
 WORKDIR /home/$username
+
+# Install user level pip dependencies
+# Used for av_imitation
+# Need this very specific verison of numpy for pytorch and cv_bridge compatibility
+#   - PyTorch: 1.26.4 provides the 0x10 API version it requires.
+#   - ROS 2: NumPy 1.26.4 is backward compatible with modules compiled against 1.21, so cv_bridge will continue to work.
+RUN pip3 install \
+    flask \
+    "numpy==1.26.4" \
+    tensorboard
