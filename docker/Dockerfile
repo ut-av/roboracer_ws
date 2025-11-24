@@ -275,7 +275,8 @@ RUN --mount=type=cache,target=/var/cache/downloads \
     dpkg -i /var/cache/downloads/cusparselt-local-tegra-repo-ubuntu2204-0.8.1_0.8.1-1_arm64.deb && \
     cp /var/cusparselt-local-tegra-repo-ubuntu2204-0.8.1/cusparselt-*-keyring.gpg /usr/share/keyrings/ && \
     apt-get update && apt-get install -y gfortran libopenblas-dev cusparselt && rm -rf /var/lib/apt/lists/* && \
-    pip3 install --no-cache-dir https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl; \
+    pip3 install --no-cache-dir https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl && \
+    pip3 install onnxruntime-gpu --index-url https://pypi.jetson-ai-lab.io/jp6/cu126; \
   elif [ "$install_cuda" = "true" ]; then \
     . /tmp/detect_gpu_setup.sh && \
     pip3 install torch==${PT_VER} torchvision==${VIS_VER} torchaudio==${AUD_VER} --index-url https://download.pytorch.org/whl/${CUDA_TAG}; \
