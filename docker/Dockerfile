@@ -466,6 +466,8 @@ WORKDIR /home/$username
 #   - PyTorch: 1.26.4 provides the 0x10 API version it requires.
 #   - ROS 2: NumPy 1.26.4 is backward compatible with modules compiled against 1.21, so cv_bridge will continue to work.
 RUN pip3 install \
-    flask \
     "numpy==1.26.4" \
+    onnx \
+    onnxruntime \
+    flask \
     tensorboard
