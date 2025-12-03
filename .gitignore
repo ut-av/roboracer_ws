@@ -23,3 +23,6 @@ external
 params/
 core.*
 docker/bash_profile.local
+
+src
+simulator
