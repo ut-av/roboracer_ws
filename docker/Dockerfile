@@ -431,8 +431,13 @@ RUN set -e && \
         # Create new dialout group
         groupadd -g 20 dialout; \
     fi && \
-    # Add user to both groups
-    usermod -aG i2c,dialout ${USERNAME}
+    # Handle input group (host GID: 104 or similar, for joystick/gamepad access)
+    # Note: The input group GID varies by system, we'll create it if it doesn't exist
+    if ! getent group input > /dev/null 2>&1; then \
+        groupadd -r input; \
+    fi && \
+    # Add user to i2c, dialout, and input groups
+    usermod -aG i2c,dialout,input ${USERNAME}
 
 # Copy bash_profile files from docker directory
 COPY docker/bash_profile.shared /tmp/

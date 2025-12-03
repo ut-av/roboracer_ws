@@ -153,7 +153,7 @@ case "$(uname -s)" in
      MOUNT_DATA=${MOUNT_DATA//-v \/tmp\/.X11-unix:\/tmp\/.X11-unix/}
      ;;
    Linux)
-     HOST_FLAGS+="--gpus all"
+     HOST_FLAGS+="--gpus all --device=/dev/input"
      HOST_EXEC=$EXEC
      ;;
    CYGWIN*|MINGW32*|MSYS*|MINGW*)
