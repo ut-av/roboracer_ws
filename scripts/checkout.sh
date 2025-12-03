@@ -58,7 +58,8 @@ if command -v nvpmodel >/dev/null 2>&1; then
     # MPU6050
     clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver
 else
-    echo "Not a Jetson device. Skipping hardware repositories (librealsense, orin_rp2_csi, mpu6050driver)."
+    echo "Not a Jetson device. Checkout out simulation repositories."
+    clone_or_pull master git@github.com:ut-av/simulator.git simulator "$PROJECT_ROOT"
 fi
 
 # robot description
