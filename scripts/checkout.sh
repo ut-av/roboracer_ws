@@ -60,6 +60,7 @@ if command -v nvpmodel >/dev/null 2>&1; then
 else
     echo "Not a Jetson device. Checkout out simulation repositories."
     clone_or_pull master git@github.com:ut-av/simulator.git simulator "$PROJECT_ROOT"
+    clone_or_pull master git@github.com:ut-av/av_sim.git av_sim
 fi
 
 # robot description

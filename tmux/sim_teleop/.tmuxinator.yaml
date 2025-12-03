@@ -6,7 +6,7 @@ windows:
       layout: main-vertical
       panes:
         - 
-          - ./simulator/simulator/build/linux/sim.x86_64 --scene circuit_launch --port 9999 --host 127.0.0.1 -logfile - 
+        - DISPLAY="${DISPLAY:-:1}" ./simulator/simulator/build/linux/sim.x86_64 --scene circuit_launch --port 9999 --host 127.0.0.1 -logfile - 
         -
           - ./container shell
           - ros2 run av_sim simulator_bridge
