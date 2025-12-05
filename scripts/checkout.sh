@@ -59,7 +59,13 @@ if command -v nvpmodel >/dev/null 2>&1; then
     clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver
 else
     echo "Not a Jetson device. Checkout out simulation repositories."
-    clone_or_pull master git@github.com:ut-av/simulator.git simulator "$PROJECT_ROOT"
+    # only needed for development
+    # Download simulator release
+    echo "Downloading simulator release..."
+    mkdir -p "$PROJECT_ROOT/simulator/simulator/build"
+    wget -O /tmp/simulator.zip "https://github.com/ut-av/simulator/releases/download/v1.0.0/linux.zip"
+    unzip -o /tmp/simulator.zip -d "$PROJECT_ROOT/simulator/simulator/build"
+    rm /tmp/simulator.zip
     clone_or_pull master git@github.com:ut-av/av_sim.git av_sim
 fi
 
