@@ -25,4 +25,7 @@ export AMENT_PREFIX_PATH=$HOME/roboracer_ws/src/amrl_maps/install:$AMENT_PREFIX_
 export ROS_VERSION=2
 export PS1='\[\e[0;32m\][docker]:\u@\h:\w$ \[\e[0m\]'
 
+# Export DISPLAY env from the parent if available, otherwise export the turbovnc display :9
+export DISPLAY="${DISPLAY:-:9}"
+
 cd $HOME/roboracer_ws
