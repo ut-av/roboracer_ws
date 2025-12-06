@@ -6,6 +6,7 @@ windows:
       layout: main-vertical
       panes:
         -
+        - if [ "$DISPLAY" = ":9" ]; then vnc; fi
         - ./simulator/simulator/build/linux/sim.x86_64 --scene circuit_launch --port 9999 --host 127.0.0.1 -logfile - 
         - rviz2
         - ros2 run av_sim simulator_bridge
