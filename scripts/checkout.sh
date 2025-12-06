@@ -61,15 +61,20 @@ else
     echo "Not a Jetson device. Checkout out simulation repositories."
     # only needed for development
     # Download simulator release
-    echo "Downloading simulator release..."
-    mkdir -p "$PROJECT_ROOT/simulator/simulator/build"
-    wget -O /tmp/simulator.zip "https://github.com/ut-av/simulator/releases/download/v1.0.0/linux.zip"
-    while ! command -v unzip >/dev/null 2>&1; do
-        echo "Error: unzip is not installed. Run 'sudo apt install unzip' to install. Then, re-run this script."
-        exit 1
-    done
-    unzip -o /tmp/simulator.zip -d "$PROJECT_ROOT/simulator/simulator/build"
-    rm /tmp/simulator.zip
+    SIM_BUILD_DIR="$PROJECT_ROOT/simulator/simulator/build"
+    if [ -d "$SIM_BUILD_DIR" ] && [ "$(ls -A "$SIM_BUILD_DIR")" ]; then
+        echo "Simulator already installed in $SIM_BUILD_DIR, delete the directory to re-download."
+    else
+        echo "Downloading simulator release..."
+        mkdir -p "$SIM_BUILD_DIR"
+        wget -O /tmp/simulator.zip "https://github.com/ut-av/simulator/releases/download/v1.0.0/linux.zip"
+        while ! command -v unzip >/dev/null 2>&1; do
+            echo "Error: unzip is not installed. Run 'sudo apt install unzip' to install. Then, re-run this script."
+            exit 1
+        done
+        unzip -o /tmp/simulator.zip -d "$SIM_BUILD_DIR"
+        rm /tmp/simulator.zip
+    fi
     clone_or_pull master https://github.com/ut-av/av_sim.git av_sim
 fi
 
