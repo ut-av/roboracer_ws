@@ -64,6 +64,10 @@ else
     echo "Downloading simulator release..."
     mkdir -p "$PROJECT_ROOT/simulator/simulator/build"
     wget -O /tmp/simulator.zip "https://github.com/ut-av/simulator/releases/download/v1.0.0/linux.zip"
+    while ! command -v unzip >/dev/null 2>&1; do
+        echo "Error: unzip is not installed. Run 'sudo apt install unzip' to install. Then, re-run this script."
+        exit 1
+    done
     unzip -o /tmp/simulator.zip -d "$PROJECT_ROOT/simulator/simulator/build"
     rm /tmp/simulator.zip
     clone_or_pull master https://github.com/ut-av/av_sim.git av_sim
