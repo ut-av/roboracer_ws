@@ -67,7 +67,7 @@ else
     else
         echo "Downloading simulator release..."
         mkdir -p "$SIM_BUILD_DIR"
-        wget -O /tmp/simulator.zip "https://github.com/ut-av/simulator/releases/download/v1.0.0/linux.zip"
+        curl -L -o /tmp/simulator.zip "https://github.com/ut-av/simulator/releases/download/v1.0.0/linux.zip"
         while ! command -v unzip >/dev/null 2>&1; do
             echo "Error: unzip is not installed. Run 'sudo apt install unzip' to install. Then, re-run this script."
             exit 1
