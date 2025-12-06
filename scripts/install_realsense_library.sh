@@ -12,8 +12,19 @@ echo "Parent folder is ${PARENT_FOLDER}"
 # if ROOT is "tmp"
 if [ "$PARENT_FOLDER" == "/" ]; then
   cd /tmp/librealsense
+  # In case of wildcard copy, the directory might be nested
+  if [ -d "librealsense" ]; then
+    cd librealsense
+  elif [ -d "external/librealsense" ]; then
+    cd external/librealsense
+  fi
 else
   cd $ROOT/external/librealsense
+fi
+
+if [ ! -f "CMakeLists.txt" ]; then
+    echo "Librealsense sources not found (CMakeLists.txt missing). Skipping installation."
+    exit 0
 fi
 
 #LSMOD_INCLUDES_UVCVIDEO=$(lsmod | grep uvcvideo)

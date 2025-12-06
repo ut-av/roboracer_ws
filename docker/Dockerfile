@@ -161,13 +161,12 @@ FROM ros2-install AS hardware-deps
 # Re-declare build arguments for this stage
 ARG install_cuda
 ARG is_jetson
-COPY scripts/install_realsense_library.sh /tmp/install_realsense_library.sh
-COPY external/librealsense /tmp/librealsense
+COPY scripts/install_realsense_library.sh external* /tmp/librealsense/
 RUN if [ "$is_jetson" = "true" ]; then \
   if [ "$install_cuda" = "true" ]; then \
     apt-get update && apt-get install -y kmod && \
-    /tmp/install_realsense_library.sh && \
-    rm /tmp/install_realsense_library.sh; \
+    /tmp/librealsense/install_realsense_library.sh && \
+    rm /tmp/librealsense/install_realsense_library.sh; \
   else \
     echo "Skipping Realsense installation (CUDA not found)"; \
   fi; \
