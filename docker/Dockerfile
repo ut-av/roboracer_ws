@@ -247,6 +247,9 @@ RUN chmod +x /usr/local/bin/vnc
 FROM app-deps AS python-ml
 
 ARG install_cuda
+ARG PT_VER=2.4.1
+ARG VIS_VER=0.19.1
+ARG AUD_VER=2.4.1
 
 # pip
 RUN apt-get update && apt-get install -y \
