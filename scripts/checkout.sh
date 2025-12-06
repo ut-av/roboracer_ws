@@ -35,7 +35,7 @@ clone_or_pull ros2 https://github.com/ut-amrl/amrl_maps.git amrl_maps
 clone_or_pull master https://github.com/ut-amrl/amrl_msgs.git amrl_msgs
 
 # ut_automata
-clone_or_pull ros2 git@github.com:ut-amrl/ut_automata.git ut_automata
+clone_or_pull ros2 https://github.com/ut-amrl/ut_automata.git ut_automata
 
 # graph nav
 #clone_or_pull ros2_dev git@github.com:ut-amrl/graph_navigation.git graph_navigation
@@ -53,7 +53,7 @@ if command -v nvpmodel >/dev/null 2>&1; then
     clone_or_pull $REALSENSE_VERSION https://github.com/nathantsoi/librealsense.git librealsense "$PROJECT_ROOT/external"
 
     # RPI-CAM-V2
-    clone_or_pull master git@github.com:ut-av/orin_rp2_csi.git orin_rp2_csi
+    clone_or_pull master https://github.com/ut-av/orin_rp2_csi.git orin_rp2_csi
 
     # MPU6050
     clone_or_pull main https://github.com/nathantsoi/ros2_mpu6050_driver.git mpu6050driver
@@ -66,20 +66,20 @@ else
     wget -O /tmp/simulator.zip "https://github.com/ut-av/simulator/releases/download/v1.0.0/linux.zip"
     unzip -o /tmp/simulator.zip -d "$PROJECT_ROOT/simulator/simulator/build"
     rm /tmp/simulator.zip
-    clone_or_pull master git@github.com:ut-av/av_sim.git av_sim
+    clone_or_pull master https://github.com/ut-av/av_sim.git av_sim
 fi
 
 # robot description
-clone_or_pull master git@github.com:ut-av/av_description.git av_description
+clone_or_pull master https://github.com/ut-av/av_description.git av_description
 
 # av_navigation
-clone_or_pull master git@github.com:ut-av/av_navigation.git av_navigation
+clone_or_pull master https://github.com/ut-av/av_navigation.git av_navigation
 
 # av_recorder
-clone_or_pull master git@github.com:ut-av/av_recorder.git av_recorder
+clone_or_pull master https://github.com/ut-av/av_recorder.git av_recorder
 
 # leg detector
-clone_or_pull main git@github.com:ut-av/leg_detector.git leg_detector
+clone_or_pull main https://github.com/ut-av/leg_detector.git leg_detector
 
 # imitation learning
-clone_or_pull master git@github.com:ut-av/av_imitation.git av_imitation
+clone_or_pull master https://github.com/ut-av/av_imitation.git av_imitation
