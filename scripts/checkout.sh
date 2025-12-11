@@ -61,18 +61,38 @@ else
     echo "Not a Jetson device. Checkout out simulation repositories."
     # only needed for development
     # Download simulator release
+    SIM_VERSION="v1.0.1"
     SIM_BUILD_DIR="$PROJECT_ROOT/simulator/simulator/build"
+
+    # Detect OS
+    if grep -qEi "(Microsoft|WSL)" /proc/version &> /dev/null ; then
+        OS_TYPE="win"
+    else
+        UNAME_S=$(uname -s)
+        case "$UNAME_S" in
+            Linux*)     OS_TYPE="linux";;
+            Darwin*)    OS_TYPE="macos";;
+            CYGWIN*|MINGW*|MSYS*) OS_TYPE="win";;
+            *)          OS_TYPE="linux"; echo "Unknown OS: $UNAME_S. Defaulting to linux.";;
+        esac
+    fi
+
     if [ -d "$SIM_BUILD_DIR" ] && [ "$(ls -A "$SIM_BUILD_DIR")" ]; then
         echo "Simulator already installed in $SIM_BUILD_DIR, delete the directory to re-download."
     else
-        echo "Downloading simulator release..."
+        echo "Downloading simulator release ${SIM_VERSION} for ${OS_TYPE}..."
         mkdir -p "$SIM_BUILD_DIR"
-        curl -L -o /tmp/simulator.zip "https://github.com/ut-av/simulator/releases/download/v1.0.0/linux.zip"
+        DOWNLOAD_URL="https://github.com/ut-av/simulator/releases/download/${SIM_VERSION}/${OS_TYPE}_${SIM_VERSION}.zip"
+        curl -L -o /tmp/simulator.zip "$DOWNLOAD_URL"
         while ! command -v unzip >/dev/null 2>&1; do
             echo "Error: unzip is not installed. Run 'sudo apt install unzip' to install. Then, re-run this script."
             exit 1
         done
         unzip -o /tmp/simulator.zip -d "$SIM_BUILD_DIR"
+        # make the binary executable
+        if [ "$OS_TYPE" == "win" ]; then
+            chmod +x "$SIM_BUILD_DIR/win_${SIM_VERSION}/sim/Roboracer Simulator.exe"
+        fi
         rm /tmp/simulator.zip
     fi
     clone_or_pull master https://github.com/ut-av/av_sim.git av_sim
