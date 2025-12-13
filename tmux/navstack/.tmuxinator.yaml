@@ -15,4 +15,4 @@ windows:
         - ros2 launch foxglove_bridge foxglove_bridge_launch.xml
         - ros2 run ut_automata gui
         - vnc
-        - sleep 10; DISPLAY=:9 ros2 -d rviz2/navstack.rviz
+        - sleep 10; DISPLAY=:9 rviz2 -d rviz2/navstack.rviz
