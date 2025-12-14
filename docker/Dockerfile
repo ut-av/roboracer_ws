@@ -13,6 +13,7 @@ ARG uid
 ARG username
 ARG install_cuda=false
 ARG is_jetson=false
+ARG BLACKWELL_GPU=false
 ARG BASE_STAGE_NAME=base_amd64
 
 # =============================================================================
@@ -54,12 +55,17 @@ RUN if [ "$install_cuda" = "true" ]; then \
 FROM ubuntu:22.04 AS base_amd64
 
 ARG install_cuda
+ARG BLACKWELL_GPU
 
 # Install CUDA toolkit for Desktop only if install_cuda is true
 # This provides GPU support on Desktop machines with NVIDIA GPUs
-COPY scripts/detect_gpu_setup.sh /tmp/detect_gpu_setup.sh
 RUN if [ "$install_cuda" = "true" ]; then \
-        . /tmp/detect_gpu_setup.sh && \
+        CUDA_TOOLKIT_PKG="cuda-toolkit-12-4"; \
+        if [ "$BLACKWELL_GPU" = "true" ] || (command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=name --format=csv,noheader | grep -q "RTX 50"); then \
+            echo ">>> DETECTED BLACKWELL GPU (RTX 50 Series). Using CUDA 12.8"; \
+            CUDA_TOOLKIT_PKG="cuda-toolkit-12-8"; \
+        fi && \
+        echo "Installing CUDA Toolkit: ${CUDA_TOOLKIT_PKG}" && \
         apt-get update && apt-get install -y \
             wget \
             gnupg2 \
@@ -265,6 +271,7 @@ RUN apt-get update && apt-get install -y \
 # pytorch (using CUDA 12.6 compatible version)
 ARG install_cuda
 ARG is_jetson
+ARG BLACKWELL_GPU
 # if this step fails, run `docker builder prune`
 RUN --mount=type=cache,target=/var/cache/downloads \
   if [ "$is_jetson" = "true" ]; then \
@@ -280,12 +287,20 @@ RUN --mount=type=cache,target=/var/cache/downloads \
     pip3 install --no-cache-dir https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl && \
     pip3 install onnxruntime-gpu --index-url https://pypi.jetson-ai-lab.io/jp6/cu126; \
   elif [ "$install_cuda" = "true" ]; then \
-    . /tmp/detect_gpu_setup.sh && \
-    pip3 install torch==${PT_VER} torchvision==${VIS_VER} torchaudio==${AUD_VER} --index-url https://download.pytorch.org/whl/${CUDA_TAG}; \
+    PIP_INDEX_URL="https://download.pytorch.org/whl/cu124"; \
+    if [ "$BLACKWELL_GPU" = "true" ] || (command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=name --format=csv,noheader | grep -q "RTX 50"); then \
+        echo ">>> DETECTED BLACKWELL GPU (RTX 50 Series). Upgrading to PyTorch 2.7.1 / CUDA 12.8"; \
+        PIP_INDEX_URL="https://download.pytorch.org/whl/cu128"; \
+        PT_VER="2.7.1"; \
+        VIS_VER="0.22.1"; \
+        AUD_VER="2.7.1"; \
+    fi && \
+    pip3 install torch==${PT_VER} torchvision==${VIS_VER} torchaudio==${AUD_VER} --index-url ${PIP_INDEX_URL}; \
   else \
     # CPU Fallback
     pip3 install torch==${PT_VER} torchvision==${VIS_VER} torchaudio==${AUD_VER} --index-url https://download.pytorch.org/whl/cpu; \
-  fi
+  fi && \
+  python3 -c "import torch; print(f'PyTorch Version: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'Device Count: {torch.cuda.device_count()}')"
 
 # leg_detector
 RUN pip3 install pykalman

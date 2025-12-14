@@ -167,10 +167,16 @@ esac
 dockerbuild() {
   # Detect NVIDIA GPU for CUDA installation (Desktop/AMD64 only)
   INSTALL_CUDA="false"
+  BLACKWELL_GPU="false"
   if [ "$DETECTED_PLATFORM" = "amd64" ]; then
     if command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null; then
       INSTALL_CUDA="true"
       echo "NVIDIA GPU detected - CUDA will be installed"
+      # Check for Blackwell (RTX 50)
+      if nvidia-smi --query-gpu=name --format=csv,noheader | grep -q "RTX 50"; then
+        BLACKWELL_GPU="true"
+        echo "Blackwell GPU (RTX 50 Series) detected on host."
+      fi
     else
       echo "No NVIDIA GPU detected - CUDA will be skipped"
     fi
@@ -222,6 +228,7 @@ dockerbuild() {
     --build-arg BASE_IMAGE_ARM64=$BASE_IMAGE_ARM64 \
     --build-arg is_jetson=$IS_JETSON_BOOL \
     --build-arg BASE_STAGE_NAME=$BASE_STAGE_NAME \
+    --build-arg BLACKWELL_GPU=$BLACKWELL_GPU \
     -t $CONTAINER_NAME \
     -f docker/Dockerfile $ROOT \
     --progress=plain
