@@ -493,4 +493,5 @@ RUN pip3 install \
     onnx \
     onnxruntime \
     flask \
-    tensorboard
+    tensorboard \
+    tqdm
