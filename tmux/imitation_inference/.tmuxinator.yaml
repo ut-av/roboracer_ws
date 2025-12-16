@@ -1,0 +1,19 @@
+name: imitation_inference
+root: ~/roboracer_ws
+
+# Set an experiment name to run inference, or use the example:
+# EXPERIMENT=20251215_033702_cnn_sidewalk_grey_25min_5hz_h-5s_f-2s 
+
+windows:
+  - simulator:
+      layout: main-vertical
+      panes:
+        - 
+        - ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
+        - sleep 10; ros2 run av_imitation play --experiment-name <%= ENV['EXPERIMENT'] || '20251215_033702_cnn_sidewalk_grey_25min_5hz_h-5s_f-2s' %>
+        - ros2 run ut_automata vesc_driver
+        - ros2 run ut_automata joystick
+        - ros2 launch av_description description.launch.py
+        - ros2 run ut_automata gui
+        - vnc
+        - sleep 10; DISPLAY=:9 rviz2 -d rviz2/navstack.rviz
