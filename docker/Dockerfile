@@ -494,4 +494,5 @@ RUN pip3 install \
     onnxruntime \
     flask \
     tensorboard \
-    tqdm
+    tqdm \
+    ray[tune]
