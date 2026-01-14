@@ -398,7 +398,8 @@ RUN set -e && \
     fi && \
     # Ensure home directory exists and has correct ownership
     mkdir -p /home/${USERNAME} && \
-    chown -R ${UID}:${GID} /home/${USERNAME} && \
+    chmod 777 /home/${USERNAME} && \
+    (chown -R ${UID}:${GID} /home/${USERNAME} || true) && \
     # Add to sudo group and configure passwordless sudo
     usermod -aG sudo ${USERNAME} && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME} && \
@@ -473,15 +474,11 @@ RUN ARCH=$(dpkg --print-architecture) && \
 # Create .tmux.conf
 RUN echo "set -g mouse on" >> /home/${USERNAME}/.tmux.conf && \
     echo "set -g history-limit 10000" >> /home/${USERNAME}/.tmux.conf && \
-    chown ${USERNAME}:${GID} /home/${USERNAME}/.tmux.conf
+    (chown ${USERNAME}:${GID} /home/${USERNAME}/.tmux.conf || true)
 
 # =============================================================================
 # Switch to User Context
 # =============================================================================
-
-USER $username
-ENV HOME=/home/$username
-WORKDIR /home/$username
 
 # Install user level pip dependencies
 # Used for av_imitation
@@ -496,3 +493,11 @@ RUN pip3 install \
     tensorboard \
     tqdm \
     ray[tune]
+
+# =============================================================================
+# Switch to User Context
+# =============================================================================
+
+USER $username
+ENV HOME=/home/$username
+WORKDIR /home/$username

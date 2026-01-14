@@ -18,6 +18,12 @@ DOCKER_COMMAND=""
 CONTAINER_NAME=""
 CMD_TO_RUN=""
 HOST_FLAGS=""
+IS_PODMAN=0
+if docker --version 2>/dev/null | grep -qi "podman"; then
+  IS_PODMAN=1
+  echo "Podman detected. Adding --userns=keep-id for rootless support."
+  HOST_FLAGS+=" --userns=keep-id"
+fi
 
 # Auto-detect platform for informational purposes
 ARCH=$(uname -m)
@@ -116,12 +122,30 @@ else
   echo "Warning: $CAR_IP_FILE not found. CAR_IP will not be set."
 fi
 
+# Ensure .bash_history exists to prevent mount errors
+if [ ! -f "$HOME/.bash_history" ]; then
+    touch "$HOME/.bash_history"
+fi
+
+# Ensure .bash_profile exists to prevent permission errors in the container
+if [ ! -f "$HOME/.bash_profile" ]; then
+    touch "$HOME/.bash_profile"
+fi
+
 CONTAINER_FILE=$ROOT/docker/Dockerfile
 _DISPLAY="${DISPLAY-:0}"
 
 RUNNING_CONTAINER=$(docker container ls -q --filter name=$CONTAINER_NAME)
 
 EXEC="/bin/bash -l"
+MOUNT_DATA=""
+# Filter out non-existent mounts
+VALID_MOUNT_DATA=""
+# Use a while loop with a file descriptor to preserve variable scope if needed (though straight string split is okay here)
+# echo "$MOUNT_DATA" could contain newlines or spaces. We built it with spaces.
+# Let's rebuild the loop to check each -v flag.
+
+# We will iterate through the original lines again to be safe and clear
 MOUNT_DATA=""
 while read -r line; do
     # Skip Jetson-specific mounts if not on Jetson
@@ -133,8 +157,37 @@ while read -r line; do
             continue
         fi
     fi
-    MOUNT_DATA="${MOUNT_DATA} $(eval echo -e "$line")"
+
+    # Skip /dev mount if using Podman (fixes rootless permission denied)
+    if [ "$IS_PODMAN" -eq 1 ] && [[ "$line" == *"-v /dev:/dev"* ]]; then
+        echo "Podman detected. Skipping /dev:/dev mount to avoid permission errors."
+        continue
+    fi
+
+    # Expand the line
+    EXPANDED_LINE=$(eval echo -e "$line")
+
+    # Check if it's a bind mount definition
+    if [[ "$EXPANDED_LINE" == -v* ]]; then
+        # Extract host path: remove leading -v and space, then cut before the colon
+        # Handle cases like "-v /host/path:/container/path"
+        # CLEAN_LINE=${EXPANDED_LINE#-v }
+        # HOST_PATH=${CLEAN_LINE%%:*}
+        # Or simpler:
+        host_path=$(echo "$EXPANDED_LINE" | sed -E 's/^-v\s+([^:]+):.*/\1/')
+        
+        # Check existence
+        if [ -e "$host_path" ]; then
+             MOUNT_DATA="${MOUNT_DATA} ${EXPANDED_LINE}"
+        else
+             echo "Warning: Mount path '$host_path' does not exist. Skipping."
+        fi
+    else
+        # Not a bind mount (e.g. --device), add it
+        MOUNT_DATA="${MOUNT_DATA} ${EXPANDED_LINE}"
+    fi
 done < "$ROOT/config/mounts"
+
 PORT_DATA=""
 while read -r line; do
     PORT_DATA="${PORT_DATA} $(eval echo -e "$line")"

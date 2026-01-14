@@ -22,5 +22,6 @@ fi
 sed -i "s|__USERNAME__|${USERNAME}|g" /home/${USERNAME}/.bash_profile
 sed -i "s|__ROS_DISTRO__|${ROS_DISTRO}|g" /home/${USERNAME}/.bash_profile
 
-chown ${USERNAME}:${GID} /home/${USERNAME}/.bash_profile
+chown ${USERNAME}:${GID} /home/${USERNAME}/.bash_profile || true
+chmod 644 /home/${USERNAME}/.bash_profile
 
