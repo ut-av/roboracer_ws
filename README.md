@@ -26,7 +26,7 @@ Ensure you have [Docker](https://ut-av.pages.dev/tools/docker/) installed accord
 cd ~
 
 # clone the roboracer_ws repository
-git clone https://github.com/ut_av/roboracer_ws.git
+git clone https://github.com/ut-av/roboracer_ws.git
 
 # navigate to the roboracer_ws directory
 cd roboracer_ws
