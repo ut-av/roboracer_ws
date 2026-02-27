@@ -206,7 +206,14 @@ case "$(uname -s)" in
      MOUNT_DATA=${MOUNT_DATA//-v \/tmp\/.X11-unix:\/tmp\/.X11-unix/}
      ;;
    Linux)
-     HOST_FLAGS+=" --gpus all --device=/dev/input"
+     if [ "$IS_PODMAN" -eq 1 ]; then
+        # For Podman without CDI, map the basic NVIDIA device nodes explicitly.
+        # We also pass NVIDIA_VISIBLE_DEVICES to trigger the container runtime hook
+        HOST_FLAGS+=" --device /dev/nvidia0 --device /dev/nvidiactl --device /dev/nvidia-uvm --device /dev/nvidia-uvm-tools"
+     else
+        HOST_FLAGS+=" --gpus all"
+     fi
+     HOST_FLAGS+=" --device=/dev/input"
      HOST_EXEC=$EXEC
      ;;
    CYGWIN*|MINGW32*|MSYS*|MINGW*)
@@ -221,10 +228,13 @@ dockerbuild() {
   # Detect NVIDIA GPU for CUDA installation (Desktop/AMD64 only)
   INSTALL_CUDA="false"
   BLACKWELL_GPU="false"
+  NVIDIA_DRIVER_VERSION=""
   if [ "$DETECTED_PLATFORM" = "amd64" ]; then
     if command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null; then
       INSTALL_CUDA="true"
-      echo "NVIDIA GPU detected - CUDA will be installed"
+      # Extract major driver version to install matching nvidia-utils in the container
+      NVIDIA_DRIVER_VERSION=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -n 1 | cut -d. -f1)
+      echo "NVIDIA GPU (Driver $NVIDIA_DRIVER_VERSION) detected - CUDA will be installed"
       # Check for Blackwell (RTX 50)
       if nvidia-smi --query-gpu=name --format=csv,noheader | grep -q "RTX 50"; then
         BLACKWELL_GPU="true"
@@ -282,6 +292,7 @@ dockerbuild() {
     --build-arg is_jetson=$IS_JETSON_BOOL \
     --build-arg BASE_STAGE_NAME=$BASE_STAGE_NAME \
     --build-arg BLACKWELL_GPU=$BLACKWELL_GPU \
+    --build-arg DRIVER_VERSION=$NVIDIA_DRIVER_VERSION \
     -t $CONTAINER_NAME \
     -f docker/Dockerfile $ROOT \
     --progress=plain
@@ -300,6 +311,7 @@ dockerrun() {
   if [ -n "$CAR_IP" ]; then
     env_flags="$env_flags -e CAR_IP=$CAR_IP"
   fi
+  env_flags="$env_flags -e NVIDIA_VISIBLE_DEVICES=all -e NVIDIA_DRIVER_CAPABILITIES=all"
   while true; do
     if docker run --rm \
       $HOST_FLAGS \

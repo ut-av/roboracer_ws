@@ -15,7 +15,7 @@ ARG install_cuda=false
 ARG is_jetson=false
 ARG BLACKWELL_GPU=false
 ARG BASE_STAGE_NAME=base_amd64
-
+ARG DRIVER_VERSION=""
 # =============================================================================
 # Stage 1: Platform-Specific Base Images
 # =============================================================================
@@ -30,6 +30,8 @@ FROM ${BASE_IMAGE_ARM64} AS base_arm64
 ARG is_jetson
 ARG install_cuda
 
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && echo \'Binary::apt::APT::Keep-Downloaded-Packages "true";\' > /etc/apt/apt.conf.d/keep-cache
+
 # NOTE that while the package repositories are not enabled inside the container, jetpack is already installed.
 # To get a list of all packages, check the host by running:
 # cat /var/lib/apt/lists/repo.download.nvidia.com_jetson_common_dists_r36.4_main_binary-arm64_Packages |grep cudnn
@@ -43,7 +45,7 @@ RUN if [ "$is_jetson" = "true" ]; then \
 
 # Install cuDNN (only when CUDA is available, required for PyTorch)
 # NOTE cudnn8 is not compatible with latest PyTorch on Jetson, so we install cudnn9
-RUN if [ "$install_cuda" = "true" ]; then \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt if [ "$install_cuda" = "true" ]; then \
         apt-get update && apt-get install -y \
         libcudnn9 \
         libcudnn9-dev \
@@ -56,10 +58,12 @@ FROM ubuntu:22.04 AS base_amd64
 
 ARG install_cuda
 ARG BLACKWELL_GPU
-
+ARG DRIVER_VERSION
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=all
 # Install CUDA toolkit for Desktop only if install_cuda is true
 # This provides GPU support on Desktop machines with NVIDIA GPUs
-RUN if [ "$install_cuda" = "true" ]; then \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt if [ "$install_cuda" = "true" ]; then \
         CUDA_TOOLKIT_PKG="cuda-toolkit-12-4"; \
         if [ "$BLACKWELL_GPU" = "true" ] || (command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=name --format=csv,noheader | grep -q "RTX 50"); then \
             echo ">>> DETECTED BLACKWELL GPU (RTX 50 Series). Using CUDA 12.8"; \
@@ -78,6 +82,10 @@ RUN if [ "$install_cuda" = "true" ]; then \
             libcudnn8 \
             libcudnn8-dev \
             && rm -rf /var/lib/apt/lists/*; \
+        if [ -n "$DRIVER_VERSION" ]; then \
+            echo "Installing matching NVIDIA utils for host driver: ${DRIVER_VERSION}" && \
+            apt-get update && apt-get install -y nvidia-utils-${DRIVER_VERSION}-server && rm -rf /var/lib/apt/lists/*; \
+        fi \
     fi
 
 # =============================================================================
@@ -102,14 +110,14 @@ FROM base-selected AS base-setup
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Setup Locale
-RUN apt-get update && apt-get install -y locales && \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y locales && \
     locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 # Install base dependencies
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
     build-essential \
     cmake \
     git \
@@ -141,7 +149,7 @@ RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o 
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
 # Install Core ROS 2 Humble packages
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
     ros-${ros_distro}-desktop-full \
     ros-dev-tools \
     && rm -rf /var/lib/apt/lists/*
@@ -149,7 +157,7 @@ RUN apt-get update && apt-get install -y \
 # Install Isaac ROS common dependencies and VPI (ARM64 only, skip on AMD64)
 # Note: VPI libraries are also part of the Jetson host system and will be mounted.
 # This ensures any additional dependencies are met inside the container.
-RUN if [ "$is_jetson" = "true" ]; then \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt if [ "$is_jetson" = "true" ]; then \
     apt-get update && \
     (apt-get install -y ros-${ros_distro}-isaac-ros-common || echo "Isaac ROS not available on this platform") && \
     rm -rf /var/lib/apt/lists/*; \
@@ -168,7 +176,7 @@ FROM ros2-install AS hardware-deps
 ARG install_cuda
 ARG is_jetson
 COPY scripts/install_realsense_library.sh external* /tmp/librealsense/
-RUN if [ "$is_jetson" = "true" ]; then \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt if [ "$is_jetson" = "true" ]; then \
   if [ "$install_cuda" = "true" ]; then \
     apt-get update && apt-get install -y kmod && \
     /tmp/librealsense/install_realsense_library.sh && \
@@ -181,7 +189,7 @@ else \
 fi
 
 # MPU6050 Dependencies
-RUN if [ "$is_jetson" = "true" ]; then \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt if [ "$is_jetson" = "true" ]; then \
   apt-get update && apt-get install -y \
   libi2c-dev \
   && rm -rf /var/lib/apt/lists/*; \
@@ -193,7 +201,7 @@ fi
 FROM hardware-deps AS app-deps
 
 # UT AUTOmata dependencies
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
   libgoogle-glog-dev \
   libgflags-dev \
   liblua5.1-0-dev \
@@ -204,7 +212,7 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 # GStreamer (for camera streaming)
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
   gstreamer1.0-plugins-base \
   gstreamer1.0-plugins-good \
   gstreamer1.0-plugins-bad \
@@ -215,7 +223,7 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 # EGL, OpenGL libraries (for GUI applications)
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
   libegl1 \
   libegl1-mesa \
   libgles2-mesa \
@@ -227,7 +235,7 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Xfce4 and TurboVNC
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
     xfce4 \
     xfce4-goodies \
     dbus-x11 \
@@ -257,8 +265,8 @@ ARG PT_VER=2.4.1
 ARG VIS_VER=0.19.1
 ARG AUD_VER=2.4.1
 
-# pip
-RUN apt-get update && apt-get install -y \
+# pip and uv
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
   python3-pip \
   python3-venv \
   python3-setuptools \
@@ -266,6 +274,19 @@ RUN apt-get update && apt-get install -y \
   python3-colcon-clean \
   libgfortran5 \
   && rm -rf /var/lib/apt/lists/*
+
+# Install uv securely and create a wrapper to use the pre-populated simulator environment
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    cp /root/.local/bin/uv /usr/local/bin/uv-bin && \
+    cp /root/.local/bin/uvx /usr/local/bin/uvx && \
+    echo '#!/bin/bash' > /usr/local/bin/uv && \
+    echo 'if [[ "$PWD" == "$HOME/roboracer_ws/simulator" ]] || [[ "$PWD" == "$HOME/roboracer_ws/simulator/"* ]]; then' >> /usr/local/bin/uv && \
+    echo '  UV_PROJECT_ENVIRONMENT="$HOME/.venv-simulator" exec /usr/local/bin/uv-bin "$@"' >> /usr/local/bin/uv && \
+    echo 'else' >> /usr/local/bin/uv && \
+    echo '  exec /usr/local/bin/uv-bin "$@"' >> /usr/local/bin/uv && \
+    echo 'fi' >> /usr/local/bin/uv && \
+    chmod +x /usr/local/bin/uv
+
 #RUN python3 -m ensurepip --default-pip && python3 -m pip install --upgrade pip
 
 # pytorch (using CUDA 12.6 compatible version)
@@ -303,7 +324,7 @@ RUN --mount=type=cache,target=/var/cache/downloads \
   python3 -c "import torch; print(f'PyTorch Version: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'Device Count: {torch.cuda.device_count()}')"
 
 # leg_detector
-RUN pip3 install pykalman
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install pykalman
 
 # =============================================================================
 # Stage 8: Navigation and SLAM Libraries
@@ -311,7 +332,7 @@ RUN pip3 install pykalman
 FROM python-ml AS nav-slam
 
 # Libraries for graph nav and enml
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
   libfreeimage3 \
   libfreeimage-dev \
   libgtest-dev \
@@ -354,12 +375,12 @@ FROM nav-slam AS utilities
 ARG is_jetson
 
 # Utils
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt apt-get update && apt-get install -y \
   vim \
   && rm -rf /var/lib/apt/lists/*
 
 # Jetson-stats (ARM64 only, will fail gracefully on AMD64)
-RUN if [ "$is_jetson" = "true" ]; then \
+RUN --mount=type=cache,target=/root/.cache/pip if [ "$is_jetson" = "true" ]; then \
     pip3 install jetson-stats || echo "jetson-stats not available on this platform"; \
 fi
 
@@ -485,7 +506,7 @@ RUN echo "set -g mouse on" >> /home/${USERNAME}/.tmux.conf && \
 # Need this very specific verison of numpy for pytorch and cv_bridge compatibility
 #   - PyTorch: 1.26.4 provides the 0x10 API version it requires.
 #   - ROS 2: NumPy 1.26.4 is backward compatible with modules compiled against 1.21, so cv_bridge will continue to work.
-RUN pip3 install \
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install \
     "numpy==1.26.4" \
     onnx \
     onnxruntime \
@@ -493,6 +514,16 @@ RUN pip3 install \
     tensorboard \
     tqdm \
     ray[tune]
+
+# =============================================================================
+# Pre-populate UV Environment for Simulator
+# =============================================================================
+RUN --mount=type=cache,target=/root/.cache/uv mkdir -p /tmp/simulator_deps /home/${USERNAME}/.venv-simulator && cd /tmp/simulator_deps && \
+    curl -sSL -o pyproject.toml https://raw.githubusercontent.com/ut-av/simulator/master/pyproject.toml && \
+    curl -sSL -o uv.lock https://raw.githubusercontent.com/ut-av/simulator/master/uv.lock || true && \
+    UV_PROJECT_ENVIRONMENT=/home/${USERNAME}/.venv-simulator uv sync --no-install-project && \
+    (chown -R ${UID}:${GID} /home/${USERNAME}/.venv-simulator || true) && \
+    rm -rf /tmp/simulator_deps
 
 # =============================================================================
 # Switch to User Context

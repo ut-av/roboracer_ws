@@ -87,11 +87,14 @@ else
     else
         echo "Cloning $SIM_REPO_URL into $SIM_REPO_DIR"
         if [ -d "$SIM_REPO_DIR" ] && [ "$(ls -A "$SIM_REPO_DIR")" ]; then
-            TEMP_DIR=$(mktemp -d)
-            git clone -b "master" "$SIM_REPO_URL" "$TEMP_DIR"
-            cp -a "$SIM_REPO_DIR"/. "$TEMP_DIR"/
-            rm -rf "$SIM_REPO_DIR"
-            mv "$TEMP_DIR" "$SIM_REPO_DIR"
+            cd "$SIM_REPO_DIR"
+            git init
+            git remote add origin "$SIM_REPO_URL"
+            git fetch origin master
+            git reset --hard origin/master
+            git branch -M master
+            git branch --set-upstream-to=origin/master master
+            cd - > /dev/null
         else
             git clone -b "master" "$SIM_REPO_URL" "$SIM_REPO_DIR"
         fi
