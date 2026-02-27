@@ -76,6 +76,29 @@ else
         rm /tmp/simulator.zip
     fi
     clone_or_pull master https://github.com/ut-av/av_sim.git av_sim
+
+    # the simulator project is unique in that it is checked out into the ~/roboracer_ws/simulator directory, which will already contain the simulator binary
+    SIM_REPO_DIR="$PROJECT_ROOT/simulator"
+    SIM_REPO_URL="https://github.com/ut-av/simulator.git"
+    if [ -d "$SIM_REPO_DIR/.git" ]; then
+        echo "Pulling latest changes for $SIM_REPO_DIR"
+        cd "$SIM_REPO_DIR"
+        git pull origin master
+    else
+        echo "Cloning $SIM_REPO_URL into $SIM_REPO_DIR"
+        if [ -d "$SIM_REPO_DIR" ] && [ "$(ls -A "$SIM_REPO_DIR")" ]; then
+            TEMP_DIR=$(mktemp -d)
+            git clone -b "master" "$SIM_REPO_URL" "$TEMP_DIR"
+            cp -a "$SIM_REPO_DIR"/. "$TEMP_DIR"/
+            rm -rf "$SIM_REPO_DIR"
+            mv "$TEMP_DIR" "$SIM_REPO_DIR"
+        else
+            git clone -b "master" "$SIM_REPO_URL" "$SIM_REPO_DIR"
+        fi
+    fi
+    cd "$SIM_REPO_DIR"
+    git submodule update --init --recursive
+    cd "$SRC_DIR"
 fi
 
 # robot description
