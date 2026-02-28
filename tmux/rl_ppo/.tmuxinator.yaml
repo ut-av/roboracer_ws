@@ -1,0 +1,13 @@
+name: rl_ppo 
+root: ~/roboracer_ws
+
+windows:
+  - simulator:
+      layout: main-vertical
+      panes:
+        - 
+        - if [ "$DISPLAY" = ":9" ]; then vnc; fi
+        - 
+          - cd simulator
+          - uv sync
+          - uv run python src/algorithms/ppo_pufferlib.py --random-spawn --random-spawn-max-cte-offset 0.8 --random-spawn-max-rotation-offset 10.0 --num-envs 1 --total-timesteps 2000000 --visualize --env-name donkey-roboracingleague-track-v0
