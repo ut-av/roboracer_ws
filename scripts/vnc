@@ -58,7 +58,8 @@ cat > ~/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml << 'XMLEOF'
 </channel>
 XMLEOF
 
-dbus-launch --exit-with-session startxfce4
+# Start xfce4 wrapped in VirtualGL so all apps get 3D acceleration
+dbus-launch --exit-with-session /opt/VirtualGL/bin/vglrun -d egl startxfce4
 EOF
 chmod +x $HOME/.vnc/xstartup.turbovnc
 
@@ -74,7 +75,11 @@ rm -f /tmp/.X9-lock
 RESOLUTION=${VNC_RESOLUTION:-1920x1080}
 
 echo "Starting TurboVNC server on :9 with resolution $RESOLUTION (no password)..."
-/opt/TurboVNC/bin/vncserver :9 -geometry $RESOLUTION -depth 24 -securitytypes None -xstartup $HOME/.vnc/xstartup.turbovnc
+# Note: we use vglrun for the entire window manager so all apps get GPU acceleration
+/opt/TurboVNC/bin/vncserver :9 -geometry $RESOLUTION -depth 24 -securitytypes None -xstartup "$HOME/.vnc/xstartup.turbovnc"
+
+# Allow local connections to the X server so simulator can be launched from other console sessions
+DISPLAY=:9 xhost + > /dev/null 2>&1 || true
 
 # Display connection info based on platform
 if command -v nvpmodel &> /dev/null; then

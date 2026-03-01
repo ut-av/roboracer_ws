@@ -60,7 +60,8 @@ ARG install_cuda
 ARG BLACKWELL_GPU
 ARG DRIVER_VERSION
 ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=all,graphics,utility,display
+ENV NVIDIA_REQUIRE_CUDA=cuda>=11.0
 # Install CUDA toolkit for Desktop only if install_cuda is true
 # This provides GPU support on Desktop machines with NVIDIA GPUs
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt if [ "$install_cuda" = "true" ]; then \
@@ -84,7 +85,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
             && rm -rf /var/lib/apt/lists/*; \
         if [ -n "$DRIVER_VERSION" ]; then \
             echo "Installing matching NVIDIA utils for host driver: ${DRIVER_VERSION}" && \
-            apt-get update && apt-get install -y nvidia-utils-${DRIVER_VERSION}-server && rm -rf /var/lib/apt/lists/*; \
+            apt-get update && apt-get install -y nvidia-utils-${DRIVER_VERSION}-server libnvidia-gl-${DRIVER_VERSION}-server && rm -rf /var/lib/apt/lists/*; \
         fi \
     fi
 
@@ -240,6 +241,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
     xfce4-goodies \
     dbus-x11 \
     && rm -rf /var/lib/apt/lists/*
+
+# Install VirtualGL
+ARG TARGETARCH
+RUN wget https://github.com/VirtualGL/virtualgl/releases/download/3.1.2/virtualgl_3.1.2_${TARGETARCH}.deb -O /tmp/virtualgl.deb && \
+    dpkg -i /tmp/virtualgl.deb && \
+    rm /tmp/virtualgl.deb
 
 ARG TARGETARCH
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
