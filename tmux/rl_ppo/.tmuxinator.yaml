@@ -1,5 +1,6 @@
 name: rl_ppo 
 root: ~/roboracer_ws
+pre_window: export DISPLAY=:9
 
 windows:
   - simulator:
