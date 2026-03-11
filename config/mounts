@@ -1,4 +1,5 @@
 -v $ROOT:/home/$_UNAME/$(basename -- $ROOT)
+-v /var/local/$_UNAME/data:/data
 -v $HOME/librealsense:/home/$_UNAME/librealsense
 -v $HOME/.ssh/authorized_keys:/home/$_UNAME/.ssh/authorized_keys
 -v $HOME/.bash_history:/home/$_UNAME/.bash_history
