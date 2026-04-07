@@ -30,7 +30,7 @@ FROM ${BASE_IMAGE_ARM64} AS base_arm64
 ARG is_jetson
 ARG install_cuda
 
-RUN rm -f /etc/apt/apt.conf.d/docker-clean && echo \'Binary::apt::APT::Keep-Downloaded-Packages "true";\' > /etc/apt/apt.conf.d/keep-cache
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # NOTE that while the package repositories are not enabled inside the container, jetpack is already installed.
 # To get a list of all packages, check the host by running:
