@@ -29,7 +29,7 @@ if [ -n "$DOCKER_BIN" ]; then
   fi
   if [[ "$IS_PODMAN" == 1 ]]; then
     echo "Podman detected. Adding --userns=keep-id for rootless support."
-    HOST_FLAGS+=" --userns=keep-id --shm-size=16"
+    HOST_FLAGS+=" --userns=keep-id"
   fi
 fi
 
