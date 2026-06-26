@@ -1,0 +1,26 @@
+name: navstack
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - null
+      - package: orin_rp2_csi
+        cmd: ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
+      - package: av_navigation
+        cmd: ros2 launch av_navigation navigation.launch.py map:=${MAP:-gdc_3n}
+      - package: ut_automata
+        cmd: ros2 launch ut_automata hokuyo_10lx.launch.py
+      - package: ut_automata
+        cmd: ros2 run ut_automata vesc_driver
+      - package: ut_automata
+        cmd: ros2 run ut_automata joystick
+      - package: av_description
+        cmd: ros2 launch av_description description.launch.py
+      - package: foxglove_bridge
+        cmd: ros2 launch foxglove_bridge foxglove_bridge_launch.xml
+      - package: ut_automata
+        cmd: ros2 run ut_automata gui
+      - package: vnc
+        cmd: /home/orin/roboracer_ws/scripts/vnc
+      - package: rviz2
+        cmd: sleep 10 && DISPLAY=:9 rviz2 -d /home/orin/roboracer_ws/rviz2/navstack.rviz

@@ -1,0 +1,22 @@
+name: imitation_inference
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - null
+      - package: orin_rp2_csi
+        cmd: ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
+      - package: av_imitation
+        cmd: sleep 10 && ros2 run av_imitation play --experiment-name ${EXPERIMENT:-20251215_033702_cnn_sidewalk_grey_25min_5hz_h-5s_f-2s}
+      - package: ut_automata
+        cmd: ros2 run ut_automata vesc_driver
+      - package: ut_automata
+        cmd: ros2 run ut_automata joystick
+      - package: av_description
+        cmd: ros2 launch av_description description.launch.py
+      - package: ut_automata
+        cmd: ros2 run ut_automata gui
+      - package: vnc
+        cmd: /home/orin/roboracer_ws/scripts/vnc
+      - package: rviz2
+        cmd: sleep 10 && DISPLAY=:9 rviz2 -d /home/orin/roboracer_ws/rviz2/navstack.rviz

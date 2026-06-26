@@ -1,0 +1,12 @@
+name: camera_calibration
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - null
+      - package: vnc
+        cmd: /home/orin/roboracer_ws/scripts/vnc
+      - package: orin_rp2_csi
+        cmd: sleep 10 && ros2 run orin_rp2_csi mono_processor --ros-args -p sensor_id:=${SENSOR_ID:-0} -p display_mode:=none
+      - package: ut_automata
+        cmd: sleep 15 && DISPLAY=:9 ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 image:=/camera_${SENSOR_ID:-0}/image_raw camera:=/camera_${SENSOR_ID:-0}

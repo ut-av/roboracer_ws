@@ -1,0 +1,11 @@
+name: rl_ppo
+pre_window: export DISPLAY=:9
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - null
+      - package: vnc
+        cmd: if [ "$DISPLAY" = ":9" ]; then /home/orin/roboracer_ws/scripts/vnc; fi
+      - package: simulator
+        cmd: cd /home/orin/roboracer_ws/simulator && uv sync && uv run python src/algorithms/ppo_pufferlib.py --random-spawn --random-spawn-max-cte-offset 0.8 --random-spawn-max-rotation-offset 10.0 --num-envs 1 --total-timesteps 2000000 --visualize --env-name donkey-roboracingleague-track-v0

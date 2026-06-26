@@ -1,0 +1,5 @@
+name: image_transport
+version: 1.0.0
+system:
+  - apt-get update && apt-get install -y ros-$ROS_DISTRO-image-transport
+user: []
