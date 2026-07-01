@@ -1,0 +1,22 @@
+name: record_map
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - null
+      - package: av_navigation
+        cmd: ros2 launch av_navigation slam.launch.py
+      - package: ut_automata
+        cmd: ros2 launch ut_automata hokuyo_10lx.launch.py
+      - package: ut_automata
+        cmd: ros2 run ut_automata vesc_driver
+      - package: ut_automata
+        cmd: ros2 run ut_automata joystick
+      - package: av_description
+        cmd: ros2 launch av_description description.launch.py
+      - package: ut_automata
+        cmd: ros2 run ut_automata gui
+      - package: vnc
+        cmd: /Users/ntsoi/roboracer_ws/scripts/vnc
+      - package: rviz2
+        cmd: sleep 10 && DISPLAY=:9 rviz2 -d /Users/ntsoi/roboracer_ws/rviz2/navstack.rviz

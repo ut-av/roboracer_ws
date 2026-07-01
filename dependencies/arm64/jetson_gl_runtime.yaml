@@ -1,0 +1,11 @@
+name: jetson_gl_runtime
+version: 1.0.0
+# GLVND/EGL/GLES loader libraries required by the Tegra GStreamer plugins
+# (nvarguscamerasrc, nvvidconv, etc.). The NVIDIA container runtime mounts the
+# vendor implementations (libEGL_nvidia.so.0) but NOT the base libEGL.so.1
+# loader, which must be installed in the image via libegl1.
+system:
+  - >-
+    apt-get update && apt-get install -y libegl1 libgles2 libglvnd0
+    && rm -rf /var/lib/apt/lists/*
+user: []

@@ -24,5 +24,11 @@ params/
 core.*
 docker/bash_profile.local
 src/
+packages/
 documentation/
 simulator/
+.air
+.airfield/
+build/
+log/
+install/

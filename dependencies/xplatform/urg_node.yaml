@@ -1,0 +1,10 @@
+name: urg_node
+version: 1.0.0
+ros_versions:
+  - humble
+  - jazzy
+system:
+  - >-
+    apt-get update && apt-get install -y ros-$ROS_DISTRO-urg-node
+    && rm -rf /var/lib/apt/lists/*
+user: []

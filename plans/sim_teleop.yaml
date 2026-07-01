@@ -1,0 +1,20 @@
+name: sim_teleop
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - null
+      - package: vnc
+        cmd: if [ "$DISPLAY" = ":9" ]; then /Users/ntsoi/roboracer_ws/scripts/vnc; fi
+      - package: simulator
+        cmd: /Users/ntsoi/roboracer_ws/simulator/simulator/build/linux/sim.x86_64 --scene circuit_launch --port 9999 --host 127.0.0.1 -logfile -
+      - package: rviz2
+        cmd: rviz2
+      - package: av_sim
+        cmd: ros2 run av_sim simulator_bridge
+      - package: ut_automata
+        cmd: ros2 run ut_automata gui --windowed
+      - package: av_description
+        cmd: ros2 launch av_description description.launch.py
+      - package: ut_automata
+        cmd: ros2 run ut_automata joystick

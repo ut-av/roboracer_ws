@@ -1,0 +1,14 @@
+name: car_calibration
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - package: ut_automata
+        cmd: $(ros2 pkg prefix ut_automata)/share/ut_automata/scripts/calibrate.py
+      - null
+      - package: ut_automata
+        cmd: ros2 run ut_automata joystick
+      - package: ut_automata
+        cmd: ros2 run ut_automata vesc_driver
+      - package: ut_automata
+        cmd: ros2 run ut_automata gui
