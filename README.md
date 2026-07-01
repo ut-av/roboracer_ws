@@ -19,24 +19,40 @@ The workspace must be named `roboracer_ws` and be located in the user's home dir
 
 ## Quickstart
 
-Ensure you have [Docker](https://ut-av.pages.dev/tools/docker/) installed according to the [Roboracer Documentation]((https://ut-av.pages.dev/tools/docker/).
+This workspace is built and launched with [airfield](https://github.com/airfield/airfield),
+which wraps each ROS 2 package in its own container image and launches the stack
+as a multi-pane tmux session. On the car (Jetson Orin) the whole navigation stack
+comes up with one command once the one-time setup is done.
+
+> **First-time setup, new-car bring-up, per-car calibration, and cross-Orin / L4T
+> notes are in [docs/AIRFIELD.md](docs/AIRFIELD.md). Read that first on a fresh
+> machine — the steps below assume airfield is already installed and the L4T base
+> image has been built.**
 
 ```bash
-# navigate to the home directory
+# clone into the home directory (this exact path is REQUIRED — see note above)
 cd ~
-
-# clone the roboracer_ws repository
 git clone https://github.com/ut-av/roboracer_ws.git
-
-# navigate to the roboracer_ws directory
 cd roboracer_ws
 
-# build the docker image
-./container build
+# one-time, on the Jetson: build the L4T-matched base image.
+# The tag (roboracer/l4t-jazzy:r39.2) must match the host JetPack/L4T version.
+dependencies/arm64/l4t-jazzy/build.sh
 
-# enter the container
-./container shell
+# build the ROS 2 packages ONCE into the shared ~/workspace/install (serial,
+# memory-capped so it does not OOM the Jetson).
+scripts/build
 
-# build the ros 2 workspace
-make
+# launch the navigation stack: cleans stale state, (re)builds if needed, launches.
+scripts/up            # same as: scripts/up navstack
+
+# tear everything down cleanly (stops orphaned containers, frees the display).
+scripts/down
 ```
+
+`scripts/up` regenerates and starts the airfield/tmux session for the plan in
+[plans/navstack.yaml](plans/navstack.yaml). To regenerate the tmux config without
+launching anything, use `airfield project up navstack --no-launch`.
+
+> The legacy `./container` + `make` workflow has been replaced by airfield and is
+> no longer maintained.
