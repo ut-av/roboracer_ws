@@ -151,15 +151,22 @@ empty" frames, `sudo systemctl restart nvargus-daemon` (also done by `scripts/up
 
 ## 5. Cross-Orin / different-car
 
-- **Base image is pinned to L4T `r39.2`** in **one** place — the project
-  [airfield.yaml](../airfield.yaml) `base_image:` field, which every package
-  inherits (a package may still override with its own `base_image:`). A Jetson on
-  a **different JetPack/L4T** version must:
-  1. edit the L4T apt repo version in
-     [dependencies/arm64/l4t-jazzy/Dockerfile](../dependencies/arm64/l4t-jazzy/Dockerfile)
-     and the tag in [build.sh](../dependencies/arm64/l4t-jazzy/build.sh) to match
-     the host, then rebuild the base;
-  2. update the single `base_image:` line in the project `airfield.yaml` to the new tag.
+- **Base-image target: JetPack 7.2 = Jetson Linux / L4T R39.2.** Confirmed on the
+  reference Orin: `nvidia-jetpack` = `7.2-b187`, `/etc/nv_tegra_release` = `R39
+  (release), REVISION: 2.0`. The base image is pinned to `r39.2` to match that.
+  The pin lives in **one** place — the project [airfield.yaml](../airfield.yaml)
+  `base_image:` field, which every package inherits (a package may still override
+  with its own `base_image:`).
+  - **Same JetPack (7.2) on the new Orin** → the base already matches. You only
+    need to *build* it locally (it's a local-only image — see §2); do **not** change
+    the Dockerfile or tag.
+  - **Different JetPack/L4T** → first check the new host's version
+    (`cat /etc/nv_tegra_release`), then:
+    1. edit the L4T apt repo version in
+       [dependencies/arm64/l4t-jazzy/Dockerfile](../dependencies/arm64/l4t-jazzy/Dockerfile)
+       and the tag in [build.sh](../dependencies/arm64/l4t-jazzy/build.sh) to match
+       the host, then rebuild the base;
+    2. update the single `base_image:` line in the project `airfield.yaml`.
 - **Device paths** (`/dev/ttyACM0`, `/dev/i2c-7`) can differ per carrier board /
   USB layout — see [§4](#4-per-car-configuration-checklist-).
 - The workspace **must** live at `~/roboracer_ws` (some source hardcodes it).
