@@ -4,11 +4,11 @@ windows:
     layout: main-vertical
     panes:
       - package: ut_automata
-        cmd: $(ros2 pkg prefix ut_automata)/share/ut_automata/scripts/calibrate.py
+        cmd: $HOME/workspace/install/ut_automata/share/ut_automata/scripts/calibrate.py
       - null
       - package: ut_automata
         cmd: ros2 run ut_automata joystick
       - package: ut_automata
-        cmd: ros2 run ut_automata vesc_driver
+        cmd: ros2 run ut_automata vesc_driver --config_dir $HOME/workspace/install/ut_automata/share/ut_automata/config
       - package: ut_automata
         cmd: ros2 run ut_automata gui

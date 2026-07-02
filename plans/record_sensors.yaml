@@ -13,7 +13,7 @@ windows:
       - package: ut_automata
         cmd: ros2 launch ut_automata hokuyo_10lx.launch.py
       - package: ut_automata
-        cmd: ros2 run ut_automata vesc_driver
+        cmd: ros2 run ut_automata vesc_driver --config_dir $HOME/workspace/install/ut_automata/share/ut_automata/config
       - package: ut_automata
         cmd: ros2 run ut_automata joystick
       - package: av_description

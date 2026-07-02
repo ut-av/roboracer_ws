@@ -12,7 +12,7 @@ windows:
       - package: ut_automata
         cmd: ros2 launch ut_automata hokuyo_10lx.launch.py
       - package: ut_automata
-        cmd: ros2 run ut_automata vesc_driver --config_dir $(ros2 pkg prefix ut_automata)/share/ut_automata/config
+        cmd: ros2 run ut_automata vesc_driver --config_dir $HOME/workspace/install/ut_automata/share/ut_automata/config
       - package: ut_automata
         # joystick does NOT define a --config_dir gflag (only vesc_driver does);
         # passing it makes gflags abort with "unknown command line flag 'config_dir'".

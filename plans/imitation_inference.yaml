@@ -9,7 +9,7 @@ windows:
       - package: av_imitation
         cmd: sleep 10 && ros2 run av_imitation play --experiment-name ${EXPERIMENT:-20251215_033702_cnn_sidewalk_grey_25min_5hz_h-5s_f-2s}
       - package: ut_automata
-        cmd: ros2 run ut_automata vesc_driver
+        cmd: ros2 run ut_automata vesc_driver --config_dir $HOME/workspace/install/ut_automata/share/ut_automata/config
       - package: ut_automata
         cmd: ros2 run ut_automata joystick
       - package: av_description
