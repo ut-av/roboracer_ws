@@ -19,4 +19,8 @@ windows:
       - package: foxglove_bridge
         cmd: ros2 launch foxglove_bridge foxglove_bridge_launch.xml
       - package: ut_automata
-        cmd: ros2 run ut_automata gui
+        # gui is a Qt app; wait for the vnc pane's :9 display socket
+        # (ut_automata/.air mounts /tmp/.X11-unix). Same pattern as navstack.
+        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
+      - package: vnc
+        cmd: $HOME/roboracer_ws/scripts/vnc

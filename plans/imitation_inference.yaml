@@ -15,8 +15,8 @@ windows:
       - package: av_description
         cmd: ros2 launch av_description description.launch.py
       - package: ut_automata
-        cmd: ros2 run ut_automata gui
+        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
       - package: vnc
-        cmd: /Users/ntsoi/roboracer_ws/scripts/vnc
+        cmd: $HOME/roboracer_ws/scripts/vnc
       - package: rviz2
-        cmd: sleep 10 && DISPLAY=:9 rviz2 -d /Users/ntsoi/roboracer_ws/rviz2/navstack.rviz
+        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 rviz2 -d $HOME/roboracer_ws/rviz2/navstack.rviz

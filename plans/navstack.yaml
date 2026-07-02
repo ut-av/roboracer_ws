@@ -26,8 +26,8 @@ windows:
       - package: ut_automata
         # gui is a Qt app; wait for the vnc pane's display socket, then target :9
         # (ut_automata/.air mounts /tmp/.X11-unix). Same pattern as the rviz2 pane.
-        cmd: for i in $(seq 1 1200); do [ -S /tmp/.X11-unix/X9 ] && break; sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
+        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
       - package: vnc
         cmd: $HOME/roboracer_ws/scripts/vnc
       - package: rviz2
-        cmd: for i in $(seq 1 1200); do [ -S /tmp/.X11-unix/X9 ] && break; sleep 0.5; done && DISPLAY=:9 rviz2 -d $HOME/roboracer_ws/rviz2/navstack.rviz
+        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 rviz2 -d $HOME/roboracer_ws/rviz2/navstack.rviz
