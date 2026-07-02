@@ -68,18 +68,31 @@ the base image:
 ## 3. Build & launch
 
 ```bash
-scripts/build                 # build the source packages once into ~/workspace/install
-scripts/up                    # clean stale state -> build (incremental) -> launch navstack
-scripts/down                  # clean teardown (stops orphaned containers, frees display :9)
+airfield project up <plan>    # launch; panes auto-build missing packages (cached)
+airfield project down         # clean teardown (containers stop via SIGHUP handling)
 ```
 
-- `scripts/up [plan]` is the normal entry point. It clears orphaned
-  `airfield-run-*` containers and a stale `:9` display/lock, restarts
-  `nvargus-daemon` (clears a stuck CSI capture session), runs `scripts/build`,
-  then `airfield project up <plan>`.
+- **Auto-build:** every ROS pane runs through the container's
+  `/opt/airfield-entry.sh`, which checks whether the pane's package is already
+  in the shared `~/workspace/install`; if not, it `colcon build
+  --packages-up-to <pkg>`s it first (serialized across panes via `flock`, one
+  build at a time, `-j2` capped — OOM-safe). Already-built and non-ROS
+  (apt-only) packages skip straight to launch. Per-package build flags come
+  from `colcon_args:` in the package's `airfield.yaml` (e.g. ut_automata's
+  `-DCMAKE_BUILD_MODE=Hardware`).
+- **Teardown:** `airfield project down [plan]` kills the plan's tmux session;
+  each pane's airfield process traps the SIGHUP and stops its own container —
+  no orphans. After a hard crash (power loss, SIGKILL), use
+  `airfield project down --prune` to sweep leftover `airfield-run-*` containers.
 - To regenerate the tmux config **without** launching: `airfield project up
   navstack --no-launch` (writes `.airfield/navstack.tmuxinator.yml`).
-- Force a clean rebuild: `rm -rf ~/workspace/build ~/workspace/install && scripts/build`.
+- Force a clean rebuild: `rm -rf ~/workspace/build ~/workspace/install`, then
+  relaunch (panes rebuild on demand) or pre-build serially with
+  `scripts/build [pkgs...]`.
+- `scripts/up` / `scripts/down` still exist as belt-and-braces **crash
+  recovery**: they additionally clear a stale `:9` display lock and restart
+  `nvargus-daemon` (stuck CSI capture session) — host-side state airfield
+  doesn't own. Normal operation doesn't need them.
 
 The panes that run are defined in [plans/navstack.yaml](../plans/navstack.yaml):
 camera (`orin_rp2_csi`), nav2 (`av_navigation`), lidar (`hokuyo`), `vesc_driver`,
