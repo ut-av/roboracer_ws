@@ -19,8 +19,10 @@ windows:
       - package: foxglove_bridge
         cmd: ros2 launch foxglove_bridge foxglove_bridge_launch.xml
       - package: ut_automata
-        # gui is a Qt app; wait for the vnc pane's :9 display socket
-        # (ut_automata/.air mounts /tmp/.X11-unix). Same pattern as navstack.
-        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
-      - package: vnc
-        cmd: $HOME/roboracer_ws/scripts/vnc
+        # gui is a Qt app; draw it on the car's physical touchscreen — the gdm
+        # auto-login Xorg on :0. ut_automata/.air mounts /tmp/.X11-unix (X0
+        # socket) and /run/user/2002/gdm (the server's Xauthority cookie).
+        # The until-loop covers launch-at-boot races before gdm brings :0 up.
+        # No vnc pane needed here anymore; use DISPLAY=:9 + a vnc pane instead
+        # to view the gui remotely (see navstack.yaml).
+        cmd: until [ -S /tmp/.X11-unix/X0 ]; do sleep 0.5; done && DISPLAY=:0 XAUTHORITY=/run/user/2002/gdm/Xauthority ros2 run ut_automata gui
