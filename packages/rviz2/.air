@@ -1,0 +1,5 @@
+mounts:
+  - ~/roboracer_ws/rviz2
+  # Shared X11 socket dir so rviz2 can connect to the vnc pane's display :9
+  # (served from a separate container). See packages/vnc/.air.
+  - /tmp/.X11-unix

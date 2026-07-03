@@ -1,0 +1,13 @@
+kind: package
+name: foxglove_bridge
+dependencies:
+  - foxglove_bridge
+  # Message-definition packages the bridge must have installed to serve
+  # schemas to the Foxglove app for topics published by OTHER containers:
+  # /laser_status (urg_node lidar driver) and /map_updates + costmap updates
+  # (nav2). Without them the bridge logs "Failed to load schemaDefinition"
+  # and those topics are unreadable in the viewer.
+  - urg_node_msgs
+  - map_msgs
+source_path: .
+ros_distro: jazzy
