@@ -89,18 +89,19 @@ echo "Starting TurboVNC server on :9 with resolution $RESOLUTION (no password)..
 # Allow local connections to the X server so simulator can be launched from other console sessions
 DISPLAY=:9 xhost + > /dev/null 2>&1 || true
 
-# Display connection info based on platform
-if command -v nvpmodel &> /dev/null; then
-    # On Jetson, show CAR_IP if available
-    if [ -n "$CAR_IP" ]; then
-        echo "VNC Server started. Connect to $CAR_IP:5909"
-    else
-        echo "VNC Server started on :9 (port 5909)"
-    fi
-else
-    # On other platforms (e.g., macOS), show localhost
-    echo "VNC Server started. Connect to localhost:5909"
-fi
+# Display connection info. This script runs INSIDE the vnc container, so don't
+# probe for host tools like nvpmodel to detect the platform (they aren't
+# installed in the image — that check always fell through and printed a
+# misleading "localhost"). The container uses --network=host, so `hostname -I`
+# reports the CAR's real addresses; prefer an explicit CAR_IP when provided,
+# otherwise pick the first address that isn't loopback or a docker bridge.
+ADDR=${CAR_IP:-$(hostname -I 2>/dev/null | tr ' ' '\n' \
+    | grep -vE '^$|^127\.|^172\.(1[6-9]|2[0-9]|3[01])\.' | head -1)}
+ADDR=${ADDR:-localhost}
+echo "VNC Server started."
+echo "Connect a VNC viewer to: ${ADDR}:9   (or equivalently ${ADDR}::5909)"
+echo "  host:displayNum — ':9' means X display 9; VNC listens on TCP port"
+echo "  5900 + displayNum, so display :9 = port 5909 (host::port form)."
 
 # vncserver daemonizes Xvnc and returns. When this script is the foreground
 # process of a container (e.g. an airfield pane), exiting here would tear the
