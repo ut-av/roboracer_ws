@@ -9,4 +9,9 @@ windows:
       - package: orin_rp2_csi
         cmd: sleep 10 && ros2 run orin_rp2_csi mono_processor --ros-args -p sensor_id:=${SENSOR_ID:-0} -p display_mode:=none
       - package: ut_automata
-        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 image:=/camera_${SENSOR_ID:-0}/image_raw camera:=/camera_${SENSOR_ID:-0}
+        # --no-service-check: orin_rp2_csi's mono_processor loads calibration from
+        # $HOME/roboracer_ws/params/cameras/<sensor_id>/calibration.txt and does NOT
+        # advertise a set_camera_info service. Without this flag the calibrator aborts
+        # at startup ("no camera service available"). We save the result to the tarball
+        # and copy it into that file by hand, so the commit-to-driver path is unused.
+        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 ros2 run camera_calibration cameracalibrator --no-service-check --size 8x6 --square 0.025 image:=/camera_${SENSOR_ID:-0}/image_raw camera:=/camera_${SENSOR_ID:-0}
