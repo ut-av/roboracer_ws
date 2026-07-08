@@ -24,10 +24,15 @@ windows:
       - package: foxglove_bridge
         cmd: ros2 launch foxglove_bridge foxglove_bridge_launch.xml
       - package: ut_automata
-        # gui is a Qt app; wait for the vnc pane's display socket, then target :9
-        # (ut_automata/.air mounts /tmp/.X11-unix). Same pattern as the rviz2 pane.
-        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
+        # gui is a Qt app; wait for the vnc pane's display, then target :9
+        # (ut_automata/.air mounts /tmp/.X11-unix). Probe for a LIVE X server,
+        # not just the socket file: a previous run's X9 socket survives in
+        # /tmp/.X11-unix after its server dies, so a plain [ -S ... ] check races
+        # the vnc pane's stale-socket cleanup and Qt apps crash with "could not
+        # connect to display :9". connect() on a dead socket is refused, so the
+        # probe only passes once Xvnc is accepting. Same pattern as rviz2 below.
+        cmd: until python3 -c 'import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect("/tmp/.X11-unix/X9")' 2>/dev/null; do sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
       - package: vnc
         cmd: $HOME/roboracer_ws/scripts/vnc
       - package: rviz2
-        cmd: until [ -S /tmp/.X11-unix/X9 ]; do sleep 0.5; done && DISPLAY=:9 rviz2 -d $HOME/roboracer_ws/rviz2/navstack.rviz
+        cmd: until python3 -c 'import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect("/tmp/.X11-unix/X9")' 2>/dev/null; do sleep 0.5; done && DISPLAY=:9 rviz2 -d $HOME/roboracer_ws/rviz2/navstack.rviz
