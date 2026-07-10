@@ -31,6 +31,8 @@ simulator/
 build/
 log/
 install/
+Airfield.md
+Taira AMRL Lab Notebook (1).md
 
 # packages/: most entries are standalone git repos cloned by
 # `airfield subprojects checkout` (never tracked here). The exceptions below
