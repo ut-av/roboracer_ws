@@ -1,8 +1,7 @@
 kind: project
 name: roboracer_ws
 version: 0.1.0
-ros_distro: humble
-default_target_device: x86_64
+ros_distro: jazzy
 # Project-wide default container base image. Individual packages inherit this
 # unless they set their own `base_image:`. Single source of truth for the
 # L4T-matched base — re-tag here (and rebuild via dependencies/arm64/l4t-jazzy)
