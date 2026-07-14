@@ -62,6 +62,13 @@ the base image:
    This image is **local-only** (not in any registry), which is why the scripts
    export `AIRFIELD_NO_PULL=1` — otherwise `docker build --pull` fails trying to
    fetch it. See [§5](#5-cross-orin--different-car).
+4. **The PlayStation-controller kernel module** — JetPack's kernel ships without
+   `CONFIG_HID_PLAYSTATION`, so PS4-style pads (incl. the fleet's AceGamer
+   clones) get wrong mappings, no battery, and won't Bluetooth-pair at all:
+   ```bash
+   scripts/install_ds4_driver.sh    # host OS, not in a container; DKMS-managed
+   ```
+   Then pair each controller — see [§4f](#4f-game-controller-ds4--acegamer-clones).
 
 ---
 
@@ -159,6 +166,38 @@ empty" frames, `sudo systemctl restart nvargus-daemon` (also done by `scripts/up
 
 `scripts/up` launches nav2 with `map:=${MAP:-gdc_3n}`. Override per environment:
 `MAP=<name> scripts/up` (maps live in `packages/av_navigation/.../maps/`).
+
+### 4f. Game controller (DS4 / AceGamer clones)
+
+The fleet's AceGamer pads enumerate as genuine DualShock 4s (`054c:09cc`).
+Two-phase setup, both **on the car's host OS** (ssh in; not in a container):
+
+1. **Once per car — install the driver** (also listed in [§2](#2-one-time-host-setup)):
+   ```bash
+   ~/roboracer_ws/scripts/install_ds4_driver.sh
+   ```
+   Builds [scripts/hid_playstation/](../scripts/hid_playstation/) via DKMS
+   (survives reboots **and** kernel updates), loads it, and enables it at boot.
+2. **Once per controller — pair it:**
+   ```bash
+   # plug the pad in via USB: the 'playstation' driver claims it and runs the
+   # activation handshake the clones require before they will BT-pair.
+   ls /sys/class/power_supply/        # -> ps-controller-battery-<MAC>  (note the MAC)
+   # unplug USB, then hold SHARE + PS ~5 s until the lightbar flashes, then:
+   bluetoothctl --timeout 30 scan on  # wait for the MAC to appear
+   bluetoothctl pair <MAC> && bluetoothctl trust <MAC> && bluetoothctl connect <MAC>
+   ```
+   Once trusted, the **PS button alone reconnects** it from then on; it appears
+   as `/dev/input/js*` for the joystick pane either way (wired or BT).
+
+Gotchas that cost a debugging session once:
+- **PS alone never enters pairing mode** — it blinks (searching for a known
+  host) then powers off after a few seconds. That pattern is *normal* and says
+  nothing about battery. Pairing mode is SHARE+PS held ~5 s.
+- **The USB-activation step is mandatory for the clones** and silently does
+  nothing under `hid-generic` — i.e. on a car that skipped step 1.
+- Battery check (pad on USB or BT): `cat /sys/class/power_supply/ps-controller-battery-*/capacity`
+- Manage/unpair later: `scripts/bluetooth_controller_manager.sh` (list/unpair/reset).
 
 ---
 
