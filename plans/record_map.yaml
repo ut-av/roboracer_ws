@@ -7,7 +7,7 @@ windows:
       - package: av_navigation
         cmd: ros2 launch av_navigation slam.launch.py
       - package: ut_automata
-        cmd: ros2 launch ut_automata hokuyo_10lx.launch.py
+        cmd: ros2 launch ut_automata lidar.launch.py
       - package: ut_automata
         cmd: ros2 run ut_automata vesc_driver --config_dir $HOME/workspace/install/ut_automata/share/ut_automata/config
       - package: ut_automata

@@ -102,11 +102,11 @@ airfield project down         # clean teardown (containers stop via SIGHUP handl
   doesn't own. Normal operation doesn't need them.
 
 The panes that run are defined in [plans/navstack.yaml](../plans/navstack.yaml):
-camera (`orin_rp2_csi`), nav2 (`av_navigation`), lidar (`hokuyo`), `vesc_driver`,
+camera (`orin_rp2_csi`), nav2 (`av_navigation`), lidar (`rplidar`/`hokuyo`, auto-selected), `vesc_driver`,
 `joystick`, robot description, `foxglove_bridge`, `gui`, `vnc`, `rviz2`.
 
 > **Hardware panes need the hardware.** `vesc_driver` needs the VESC on
-> `/dev/ttyACM0`, `hokuyo` needs the lidar online, the camera needs the CSI
+> `/dev/ttyACM0`, the lidar pane needs a lidar online, the camera needs the CSI
 > sensor. Missing hardware makes only that pane fail; the rest of the stack is
 > unaffected. `foxglove_bridge` "schemaDefinition … not found" lines are harmless
 > (see [note](#foxglove-schema-warnings)).
@@ -141,20 +141,27 @@ Re-calibrating gain/offset per car is a physical procedure — see
 
 The container only sees devices/groups it's told to pass through:
 ```yaml
-devices:  [/dev/ttyACM0, /dev/i2c-7, /dev/input/js0]
-group_add: ["20", "108"]     # 20=dialout (VESC serial), 108=i2c (IMU)
+devices:  [/dev/ttyACM0, /dev/i2c-7, /dev/input, /dev/ttyUSB0]
+group_add: ["20", "108", "996"]  # 20=dialout (VESC + RPLIDAR serial), 108=i2c (IMU), 996=input (joystick)
 ```
 If `serial_port` or `i2c_bus_number` differs on a new car, update **both**
 `vesc.lua` and this `devices:` list. A device that isn't present is skipped with a
 warning (the container still starts).
 
-### 4c. Lidar network — [`packages/ut_automata/launch/hokuyo_10lx.launch.py`](../packages/ut_automata/launch/hokuyo_10lx.launch.py)
+### 4c. Lidar — [`packages/ut_automata/launch/lidar.launch.py`](../packages/ut_automata/launch/lidar.launch.py)
 
-- Lidar (Hokuyo UST-10LX): `ip_address: 192.168.0.10`, `ip_port: 10940`.
-- The Jetson's lidar NIC needs a matching **static IP** on the same subnet
-  (current setup: `192.168.0.1/24`, NetworkManager connection named `lidar`).
-  Without it nav2 aborts bringup (no `/scan`). This is **host** config, not in the
-  repo — set it per Jetson.
+`lidar.launch.py` auto-selects the driver from what's plugged in (USB RPLIDAR
+wins over Ethernet Hokuyo). Both publish `sensor_msgs/LaserScan` on `/scan` with
+`frame_id: laser`, so nothing downstream changes.
+
+- **Slamtec RPLIDAR C1** (USB): a `/dev/ttyUSB*` device present → `rplidar_ros`
+  at `460800` baud on that port. `/dev/ttyUSB0` is passed through in `airfield.yaml`
+  (skipped when absent, so the Hokuyo setup is unaffected).
+- **Hokuyo UST-10LX** (Ethernet): otherwise → `urg_node` at `ip_address:
+  192.168.0.10`, `ip_port: 10940`. The Jetson's lidar NIC then needs a matching
+  **static IP** on the same subnet (current setup: `192.168.0.1/24`,
+  NetworkManager connection named `lidar`). Without it nav2 aborts bringup (no
+  `/scan`). This is **host** config, not in the repo — set it per Jetson.
 
 ### 4d. CSI camera
 
