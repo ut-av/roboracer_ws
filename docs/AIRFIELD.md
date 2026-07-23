@@ -206,6 +206,41 @@ Gotchas that cost a debugging session once:
 - Battery check (pad on USB or BT): `cat /sys/class/power_supply/ps-controller-battery-*/capacity`
 - Manage/unpair later: `scripts/bluetooth_controller_manager.sh` (list/unpair/reset).
 
+### 4g. Host mounts — `.air` (**not in git**)
+
+`.air` is airfield's **per-machine local config**: host paths mounted into every
+package's container. It is deliberately **gitignored**, because it names things
+that differ per car (uids, host directories) — so a fresh clone has none and you
+must create it.
+
+Create `.air` at the **project root**:
+
+```yaml
+mounts:
+  - ~/.bash_history
+  - ~/.ssh/authorized_keys
+  # build once, launch many (see §1)
+  - ~/workspace/build
+  - ~/workspace/install
+  - ~/workspace/log
+  # Qt panes (ut_automata `gui`, `rviz2`) reaching the touchscreen (:0)
+  # or the vnc pane's display (:9)
+  - /tmp/.X11-unix
+  - /run/user/$UID/gdm
+```
+
+`$UID` expands to the login user's real numeric id, so this snippet is
+copy-paste identical on every car — **don't hardcode `2002`**, or the mount
+silently resolves to nothing on a car whose user has a different id (airfield
+skips absent mounts with a `[WARN]`, and the touchscreen `gui` pane then fails
+to draw on `:0` while VNC keeps working).
+
+> **Why here and not in `packages/ut_automata/.air`?** `ut_automata` is upstream
+> **ut-amrl course infrastructure** — cloned by students on lab machines and
+> adapted for other robot platforms — so host-specific paths must not be
+> committed into it. A project-level `.air` also survives
+> `scripts/checkout.sh` re-cloning that package.
+
 ---
 
 ## 5. Cross-Orin / different-car
