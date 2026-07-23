@@ -20,9 +20,14 @@ windows:
         cmd: ros2 launch foxglove_bridge foxglove_bridge_launch.xml
       - package: ut_automata
         # gui is a Qt app; draw it on the car's physical touchscreen — the gdm
-        # auto-login Xorg on :0. ut_automata/.air mounts /tmp/.X11-unix (X0
-        # socket) and /run/user/2002/gdm (the server's Xauthority cookie).
+        # auto-login Xorg on :0. The PROJECT .air mounts /tmp/.X11-unix (X0
+        # socket) and /run/user/$UID/gdm (the server's Xauthority cookie).
+        # Read the cookie back via $(id -u) so this matches that mount on every
+        # car: the container runs as the same uid as the host (which is what
+        # makes the same-path mount line up in the first place). Hardcoding the
+        # number instead mounts the cookie correctly but reads the wrong path
+        # wherever the login user's id differs, and the pane dies on X auth.
         # The until-loop covers launch-at-boot races before gdm brings :0 up.
         # No vnc pane needed here anymore; use DISPLAY=:9 + a vnc pane instead
         # to view the gui remotely (see navstack.yaml).
-        cmd: until [ -S /tmp/.X11-unix/X0 ]; do sleep 0.5; done && DISPLAY=:0 XAUTHORITY=/run/user/2002/gdm/Xauthority ros2 run ut_automata gui
+        cmd: until [ -S /tmp/.X11-unix/X0 ]; do sleep 0.5; done && DISPLAY=:0 XAUTHORITY=/run/user/$(id -u)/gdm/Xauthority ros2 run ut_automata gui
