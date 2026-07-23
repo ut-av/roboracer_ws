@@ -10,6 +10,20 @@
 #
 set -uo pipefail
 
+# Gracefully stop node workloads FIRST so hardware drivers can shut down cleanly
+# before anything is SIGKILLed. In particular the Slamtec RPLIDAR driver stops
+# its motor only from its SIGINT handler, so a straight container kill leaves the
+# C1 disk spinning on USB power. Inside each run container, SIGINT every process
+# except PID 1 (the bash wrapper, kept alive to hold the container) -- that bash
+# parent otherwise swallows signals meant for the ros2 nodes -- then give the
+# drivers a moment to run their cleanup before we tear the session down. This
+# also covers the fast `docker rm -f` (SIGKILL) sweep further down.
+echo "[down] gracefully stopping node workloads (lets the lidar stop its motor)..."
+for c in $(docker ps -q --filter name=airfield-run-); do
+    docker exec "$c" sh -c 'for p in /proc/[0-9]*; do pid=${p#/proc/}; [ "$pid" = 1 ] || kill -INT "$pid" 2>/dev/null; done' 2>/dev/null || true
+done
+sleep 1.5
+
 echo "[down] killing tmux server (if any)..."
 tmux kill-server 2>/dev/null || true
 
