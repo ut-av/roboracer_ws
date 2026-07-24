@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# Tear the navstack down CLEANLY.
+#
+# `tmux kill-server` (or closing the tmuxinator session) only sends SIGHUP to the
+# panes, which airfield's `docker run` does not treat as a stop — so the per-pane
+# containers are left running ORPHANED. A leftover vnc container keeps holding
+# display :9, and the next launch then fails with "X server already running on
+# :9" / rviz2+gui "No protocol specified". This script stops everything for real.
+#
+set -uo pipefail
+
+# Gracefully stop node workloads FIRST so hardware drivers can shut down cleanly
+# before anything is SIGKILLed. In particular the Slamtec RPLIDAR driver stops
+# its motor only from its SIGINT handler, so a straight container kill leaves the
+# C1 disk spinning on USB power. Inside each run container, SIGINT every process
+# except PID 1 (the bash wrapper, kept alive to hold the container) -- that bash
+# parent otherwise swallows signals meant for the ros2 nodes -- then give the
+# drivers a moment to run their cleanup before we tear the session down. This
+# also covers the fast `docker rm -f` (SIGKILL) sweep further down.
+echo "[down] gracefully stopping node workloads (lets the lidar stop its motor)..."
+for c in $(docker ps -q --filter name=airfield-run-); do
+    docker exec "$c" sh -c 'for p in /proc/[0-9]*; do pid=${p#/proc/}; [ "$pid" = 1 ] || kill -INT "$pid" 2>/dev/null; done' 2>/dev/null || true
+done
+sleep 1.5
+
+echo "[down] killing tmux server (if any)..."
+tmux kill-server 2>/dev/null || true
+
+echo "[down] stopping airfield containers..."
+ids="$(docker ps -q --filter name=airfield-run-)"
+[ -n "$ids" ] && docker stop -t 3 $ids >/dev/null 2>&1 || true
+docker rm -f $(docker ps -aq --filter name=airfield-run-) >/dev/null 2>&1 || true
+
+echo "[down] clearing stale VNC display :9 state..."
+rm -f /tmp/.X11-unix/X9 /tmp/.X9-lock 2>/dev/null || true
+
+echo "[down] done. running containers: $(docker ps -q | wc -l)"

@@ -58,8 +58,12 @@ cat > ~/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml << 'XMLEOF'
 </channel>
 XMLEOF
 
-# Start xfce4 wrapped in VirtualGL so all apps get 3D acceleration
-dbus-launch --exit-with-session /opt/VirtualGL/bin/vglrun -d egl startxfce4
+# Start xfce4 wrapped in VirtualGL so all apps get 3D acceleration.
+# Send xfce's (very noisy but harmless) dbus/AT-SPI/polkit/upower/VGL warnings —
+# unavoidable in a container with no system D-Bus — to a dedicated log so they
+# don't flood the pane (which tails the VNC server log). The desktop still runs;
+# look at ~/.vnc/xfce-session.log if you ever need to debug the desktop itself.
+dbus-launch --exit-with-session /opt/VirtualGL/bin/vglrun -d egl startxfce4 > "$HOME/.vnc/xfce-session.log" 2>&1
 EOF
 chmod +x $HOME/.vnc/xstartup.turbovnc
 
@@ -75,21 +79,39 @@ rm -f /tmp/.X9-lock
 RESOLUTION=${VNC_RESOLUTION:-1920x1080}
 
 echo "Starting TurboVNC server on :9 with resolution $RESOLUTION (no password)..."
-# Note: we use vglrun for the entire window manager so all apps get GPU acceleration
-/opt/TurboVNC/bin/vncserver :9 -geometry $RESOLUTION -depth 24 -securitytypes None -xstartup "$HOME/.vnc/xstartup.turbovnc"
+# Note: we use vglrun for the entire window manager so all apps get GPU acceleration.
+# -ac disables X access control AT SERVER START so cross-container clients (rviz2,
+# the ut_automata gui) can connect the instant the :9 socket exists. Without it
+# there's a race: the socket appears before the `xhost +` below runs, and panes that
+# wait only for the socket launch into that gap and die with "No protocol specified".
+/opt/TurboVNC/bin/vncserver :9 -geometry $RESOLUTION -depth 24 -securitytypes None -ac -xstartup "$HOME/.vnc/xstartup.turbovnc"
 
 # Allow local connections to the X server so simulator can be launched from other console sessions
 DISPLAY=:9 xhost + > /dev/null 2>&1 || true
 
-# Display connection info based on platform
-if command -v nvpmodel &> /dev/null; then
-    # On Jetson, show CAR_IP if available
-    if [ -n "$CAR_IP" ]; then
-        echo "VNC Server started. Connect to $CAR_IP:5909"
-    else
-        echo "VNC Server started on :9 (port 5909)"
-    fi
+# Display connection info. This script runs INSIDE the vnc container, so don't
+# probe for host tools like nvpmodel to detect the platform (they aren't
+# installed in the image — that check always fell through and printed a
+# misleading "localhost"). The container uses --network=host, so `hostname -I`
+# reports the CAR's real addresses; prefer an explicit CAR_IP when provided,
+# otherwise pick the first address that isn't loopback or a docker bridge.
+ADDR=${CAR_IP:-$(hostname -I 2>/dev/null | tr ' ' '\n' \
+    | grep -vE '^$|^127\.|^172\.(1[6-9]|2[0-9]|3[01])\.' | head -1)}
+ADDR=${ADDR:-localhost}
+echo "VNC Server started."
+echo "Connect a VNC viewer to: ${ADDR}:9   (or equivalently ${ADDR}::5909)"
+echo "  host:displayNum — ':9' means X display 9; VNC listens on TCP port"
+echo "  5900 + displayNum, so display :9 = port 5909 (host::port form)."
+
+# vncserver daemonizes Xvnc and returns. When this script is the foreground
+# process of a container (e.g. an airfield pane), exiting here would tear the
+# container down and kill display :9. Block so the container — and :9 — persist.
+# Tail the server log if present so the pane stays informative; otherwise idle.
+VNC_LOG="$HOME/.vnc/$(hostname):9.log"
+if [ -f "$VNC_LOG" ]; then
+    # Filter the handful of benign X-server startup notes (unknown marine-nav
+    # keysyms, missing DPMS extension) so the pane shows a clean "server up" state.
+    tail -F "$VNC_LOG" | grep --line-buffered -vE 'Could not resolve keysym|Errors from xkbcomp|does not have extension for'
 else
-    # On other platforms (e.g., macOS), show localhost
-    echo "VNC Server started. Connect to localhost:5909"
+    exec sleep infinity
 fi

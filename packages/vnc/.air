@@ -1,0 +1,5 @@
+mounts:
+  - ~/roboracer_ws/scripts
+  # Shared X11 socket dir so other package containers (e.g. rviz2) can reach
+  # this pane's VNC display :9 across the container boundary.
+  - /tmp/.X11-unix

@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# Build airfield packages ONCE into the shared persistent workspace at
+# ~/workspace/{build,install} (mounted into every container via the project
+# .air), serially and with capped build parallelism.
+#
+# Why this exists:
+#   airfield runs one ephemeral container per pane and, by default, each pane
+#   ran `colcon build` inline on launch. With the navstack plan that is up to
+#   four ut_automata builds (each peaking ~4.7 GB compiling amrl_msgs) plus the
+#   others, all concurrently -> ~19 GB demanded on a 7.4 GB box -> OOM reboot.
+#
+#   The pre-airfield stack was "build once, launch many": a single `colcon
+#   build` into one shared ~/roboracer_ws/install, then tmux panes only ran
+#   `ros2 launch`/`ros2 run`. This script restores that model inside airfield:
+#   build each package serially into the shared install/, with no nodes running
+#   and make/cmake parallelism capped so a single build never approaches the
+#   memory ceiling. Afterwards `airfield project up <plan>` finds the prebuilt
+#   install/ and the panes only source + launch (no rebuild) -- see the colcon
+#   guard in airfield's tmux/tmuxinator.yml.j2.
+#
+# Usage:
+#   scripts/build                 # build the navstack source packages
+#   scripts/build pkg_a pkg_b ...  # build a specific set
+#
+# To force a clean rebuild (e.g. after pulling new sources):
+#   rm -rf ~/workspace/build ~/workspace/install && scripts/build
+#
+set -euo pipefail
+
+# Use the locally-built base image (roboracer/l4t-jazzy) instead of forcing a
+# registry pull, which fails (the base is local-only). The navstack plan sets
+# this in its pre_window; set it here too so this script works standalone.
+export AIRFIELD_NO_PULL=1
+
+# Source packages launched by the navstack plan. Image/apt-only panes
+# (foxglove_bridge, vnc, rviz2) have no colcon source and are skipped.
+DEFAULT_PKGS=(orin_rp2_csi av_description ut_automata av_navigation)
+
+PKGS=("$@")
+if [ ${#PKGS[@]} -eq 0 ]; then
+    PKGS=("${DEFAULT_PKGS[@]}")
+fi
+
+mkdir -p "$HOME/workspace/build" "$HOME/workspace/install" "$HOME/workspace/log"
+
+echo "Building into shared workspace: $HOME/workspace/install"
+echo "Packages (serial): ${PKGS[*]}"
+echo
+
+for pkg in "${PKGS[@]}"; do
+    echo "=================================================================="
+    echo "  building $pkg  ($(date +%H:%M:%S))"
+    echo "=================================================================="
+    # --parallel-workers 1 : one colcon package at a time.
+    # MAKEFLAGS / CMAKE_BUILD_PARALLEL_LEVEL : cap make/ninja jobs so the
+    # template-heavy amrl_msgs rosidl compile (the memory spike) stays ~3.6 GB
+    # instead of ~4.7 GB, leaving comfortable headroom on the 7.4 GB Jetson.
+    # -DCMAKE_BUILD_MODE=Hardware : ut_automata gates its hardware drivers
+    # (vesc_driver) behind IF(CMAKE_BUILD_MODE MATCHES "Hardware"); without it
+    # vesc_driver is never built -> "No executable found". Harmless for packages
+    # that don't read CMAKE_BUILD_MODE. This is the on-car build.
+    airfield package cmd "$pkg" -- bash -lc \
+        "cd ~/workspace && export MAKEFLAGS=-j2 CMAKE_BUILD_PARALLEL_LEVEL=2 && \
+         colcon build --packages-up-to $pkg --parallel-workers 1 \
+         --event-handlers console_direct+ \
+         --cmake-args -DCMAKE_BUILD_MODE=Hardware"
+    echo
+done
+
+echo "=================================================================="
+echo "  done. shared install/ now contains:"
+echo "=================================================================="
+ls "$HOME/workspace/install"

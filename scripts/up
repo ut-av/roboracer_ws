@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# CRASH-RECOVERY launcher. Normal operation no longer needs this script:
+# `airfield project up <plan>` auto-builds missing packages per-pane (via the
+# container's /opt/airfield-entry.sh: flock-serialized, cached, OOM-safe) and
+# `airfield project down` tears sessions down without orphans (SIGHUP handling
+# in run_container_foreground; `--prune` sweeps after hard crashes).
+#
+# Use this instead when host-side state is wedged after an UNCLEAN crash
+# (power loss, SIGKILL, reboot mid-session). It additionally:
+#   1. removes leftovers airfield can't own:
+#        - orphaned airfield containers (a leftover vnc holding :9 breaks rviz2/gui)
+#        - stale :9 socket/lock
+#        - a stuck Argus camera session (causes orin_rp2_csi "Captured image is
+#          invalid or empty") via nvargus-daemon restart (needs sudo)
+#   2. PRE-builds this plan's colcon packages serially (scripts/build) so all
+#      compiling happens before any node launches — optional now that panes
+#      auto-build, but gives cleaner serial build output on a first run.
+#
+# Usage: scripts/up [plan]   (default plan: navstack)
+#
+set -uo pipefail
+PLAN="${1:-navstack}"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "[up] clearing any orphaned containers / stale display / camera state..."
+ids="$(docker ps -q --filter name=airfield-run-)"
+[ -n "$ids" ] && docker stop -t 3 $ids >/dev/null 2>&1 || true
+docker rm -f $(docker ps -aq --filter name=airfield-run-) >/dev/null 2>&1 || true
+rm -f /tmp/.X11-unix/X9 /tmp/.X9-lock 2>/dev/null || true
+# Clear any stale CSI camera capture session (no consumer is running yet).
+sudo -n systemctl restart nvargus-daemon 2>/dev/null || true
+
+# Build-once: compile exactly the colcon packages THIS plan launches into the
+# shared ~/workspace/install (serial + OOM-safe via scripts/build). We derive the
+# set from the plan's `package:` entries so every plan -- current and future --
+# works without hand-listing packages here.
+#
+# Tool/non-colcon packages are skipped: they ship no ROS source (vnc, rviz2,
+# foxglove_bridge are apt/wrapper-only; simulator is a prebuilt binary + uv app),
+# so `colcon build --packages-up-to <them>` would find nothing to build.
+PLAN_FILE="$SCRIPT_DIR/../plans/$PLAN.yaml"
+if [ ! -f "$PLAN_FILE" ]; then
+    echo "[up] plan file not found: $PLAN_FILE" >&2
+    exit 1
+fi
+
+NON_COLCON=" vnc rviz2 foxglove_bridge simulator "
+mapfile -t plan_pkgs < <(
+    grep -E '^[[:space:]]*-?[[:space:]]*package:' "$PLAN_FILE" \
+        | sed -E 's/.*package:[[:space:]]*//' \
+        | awk '{print $1}' | sort -u
+)
+build_pkgs=()
+for p in "${plan_pkgs[@]}"; do
+    [ -z "$p" ] && continue
+    case "$NON_COLCON" in *" $p "*) continue ;; esac
+    build_pkgs+=("$p")
+done
+
+if [ ${#build_pkgs[@]} -eq 0 ]; then
+    echo "[up] plan '$PLAN' has no colcon packages; skipping build-once."
+else
+    echo "[up] build-once for '$PLAN' (serial, OOM-safe): ${build_pkgs[*]}"
+    if ! "$SCRIPT_DIR/build" "${build_pkgs[@]}"; then
+        echo "[up] build failed; not launching." >&2
+        exit 1
+    fi
+fi
+
+echo "[up] launching plan: $PLAN"
+exec airfield project up "$PLAN"

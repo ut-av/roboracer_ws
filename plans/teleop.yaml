@@ -1,0 +1,33 @@
+name: teleop
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - null
+      - package: orin_rp2_csi
+        cmd: ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
+      - package: leg_detector
+        cmd: ros2 launch leg_detector leg_detector.launch.py
+      - package: ut_automata
+        cmd: ros2 launch ut_automata lidar.launch.py
+      - package: ut_automata
+        cmd: ros2 run ut_automata vesc_driver --config_dir $HOME/workspace/install/ut_automata/share/ut_automata/config
+      - package: ut_automata
+        cmd: ros2 run ut_automata joystick
+      - package: av_description
+        cmd: ros2 launch av_description description.launch.py
+      - package: foxglove_bridge
+        cmd: ros2 launch foxglove_bridge foxglove_bridge_launch.xml
+      - package: ut_automata
+        # gui is a Qt app; draw it on the car's physical touchscreen — the gdm
+        # auto-login Xorg on :0. The PROJECT .air mounts /tmp/.X11-unix (X0
+        # socket) and /run/user/$UID/gdm (the server's Xauthority cookie).
+        # Read the cookie back via $(id -u) so this matches that mount on every
+        # car: the container runs as the same uid as the host (which is what
+        # makes the same-path mount line up in the first place). Hardcoding the
+        # number instead mounts the cookie correctly but reads the wrong path
+        # wherever the login user's id differs, and the pane dies on X auth.
+        # The until-loop covers launch-at-boot races before gdm brings :0 up.
+        # No vnc pane needed here anymore; use DISPLAY=:9 + a vnc pane instead
+        # to view the gui remotely (see navstack.yaml).
+        cmd: until [ -S /tmp/.X11-unix/X0 ]; do sleep 0.5; done && DISPLAY=:0 XAUTHORITY=/run/user/$(id -u)/gdm/Xauthority ros2 run ut_automata gui

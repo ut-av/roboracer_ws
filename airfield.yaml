@@ -1,0 +1,49 @@
+kind: project
+name: roboracer_ws
+version: 0.1.0
+ros_distro: jazzy
+# Project-wide default container base image. Individual packages inherit this
+# unless they set their own `base_image:`. Single source of truth for the
+# L4T-matched base — re-tag here (and rebuild via dependencies/arm64/l4t-jazzy)
+# when moving to a different JetPack/L4T version. See docs/AIRFIELD.md.
+base_image: roboracer/l4t-jazzy:r39.2
+subprojects:
+  amrl_maps:
+    url: https://github.com/ut-amrl/amrl_maps.git
+    version: ros2
+  amrl_msgs:
+    url: https://github.com/ut-amrl/amrl_msgs.git
+    version: master
+  av_description:
+    url: https://github.com/ut-av/av_description.git
+    version: master
+  av_imitation:
+    url: https://github.com/ut-av/av_imitation.git
+    version: master
+  av_navigation:
+    url: https://github.com/ut-av/av_navigation.git
+    version: master
+  av_recorder:
+    url: https://github.com/ut-av/av_recorder.git
+    version: master
+  av_sim:
+    url: https://github.com/ut-av/av_sim.git
+    version: master
+  leg_detector:
+    url: https://github.com/ut-av/leg_detector.git
+    version: main
+  ut_automata:
+    url: https://github.com/ut-amrl/ut_automata.git
+    version: ros2
+  orin_rp2_csi:
+    url: https://github.com/ut-av/orin_rp2_csi.git
+    version: master
+  mpu6050driver:
+    url: https://github.com/nathantsoi/ros2_mpu6050_driver.git
+    version: main
+  simulator:
+    url: https://github.com/ut-av/simulator.git
+    version: master
+  librealsense:
+    url: https://github.com/nathantsoi/librealsense.git
+    version: v2.56.5-l4t36.4.4

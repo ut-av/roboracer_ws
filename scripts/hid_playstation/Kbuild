@@ -1,0 +1,3 @@
+# kbuild rules (the kernel build system reads Kbuild in preference to Makefile)
+obj-m := hid-playstation.o
+ccflags-y := -Wno-error

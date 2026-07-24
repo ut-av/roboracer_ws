@@ -1,0 +1,19 @@
+name: car_calibration
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - package: ut_automata
+        cmd: $HOME/workspace/install/ut_automata/share/ut_automata/scripts/calibrate.py
+      - null
+      - package: ut_automata
+        cmd: ros2 run ut_automata joystick
+      - package: ut_automata
+        cmd: ros2 run ut_automata vesc_driver --config_dir $HOME/workspace/install/ut_automata/share/ut_automata/config
+      - package: ut_automata
+        # Probe for a LIVE X server on :9 (a stale X9 socket from a previous run
+        # passes a plain [ -S ... ] file test and Qt apps then crash with "could
+        # not connect to display :9"; connect() on a dead socket is refused).
+        cmd: until python3 -c 'import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect("/tmp/.X11-unix/X9")' 2>/dev/null; do sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
+      - package: vnc
+        cmd: $HOME/roboracer_ws/scripts/vnc

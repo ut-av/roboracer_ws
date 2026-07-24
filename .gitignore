@@ -26,3 +26,25 @@ docker/bash_profile.local
 src/
 documentation/
 simulator/
+.air
+.airfield/
+build/
+log/
+install/
+Airfield.md
+Taira AMRL Lab Notebook (1).md
+
+# packages/: most entries are standalone git repos cloned by
+# `airfield subprojects checkout` (never tracked here). The exceptions below
+# are config-only packages (no source, no upstream repo) whose airfield
+# config would otherwise live in no repository at all. `packages/*` (not
+# `packages/`) so the negations can re-include them; the trailing !.air
+# lines override the global .air ignore above for just these packages.
+packages/*
+!packages/vnc
+!packages/rviz2
+!packages/foxglove_bridge
+packages/*/core
+!packages/vnc/.air
+!packages/rviz2/.air
+!packages/foxglove_bridge/.air

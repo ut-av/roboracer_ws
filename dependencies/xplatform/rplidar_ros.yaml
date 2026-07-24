@@ -1,0 +1,34 @@
+name: rplidar_ros
+version: 2.1.0-src
+ros_versions:
+  - humble
+  - jazzy
+# Build rplidar_ros from Slamtec's ros2 branch instead of apt.
+#
+# The released apt package (ros-$ROS_DISTRO-rplidar-ros 2.1.0-4) bundles an
+# older RPLIDAR SDK (1.12.0) whose legacy scan negotiation FAILS to start a
+# scan on the RPLIDAR C1: it connects and reads health OK, then dies with
+# "Cannot start scan: '80008000'" (RESULT_OPERATION_FAIL). Slamtec's ros2
+# branch HEAD ships SDK 2.1.0, which starts the C1's Standard scan cleanly
+# (verified on this car: 10 Hz, 16 m, health OK).
+#
+# We pin the exact commit and install the built package straight into the
+# distro's install tree (/opt/ros/$ROS_DISTRO) so it's on the default
+# ament/AMENT_PREFIX_PATH with no extra overlay to source at runtime. Note
+# the ros2 branch names the executable `rplidar_node` (the apt build called
+# it `rplidar_composition`) -- lidar.launch.py uses `rplidar_node`.
+system:
+  - >-
+    . /opt/ros/$ROS_DISTRO/setup.sh
+    && mkdir -p /tmp/rplidar_ws/src/rplidar_ros
+    && cd /tmp/rplidar_ws/src/rplidar_ros
+    && git init -q
+    && git remote add origin https://github.com/Slamtec/rplidar_ros.git
+    && git fetch -q --depth 1 origin 24cc9b6dea97e045bda1408eaa867ce730fd3fc3
+    && git checkout -q FETCH_HEAD
+    && cd /tmp/rplidar_ws
+    && colcon build --packages-select rplidar_ros --merge-install
+    --install-base /opt/ros/$ROS_DISTRO
+    --cmake-args -DCMAKE_BUILD_TYPE=Release
+    && cd / && rm -rf /tmp/rplidar_ws
+user: []

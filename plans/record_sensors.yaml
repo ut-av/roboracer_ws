@@ -1,0 +1,27 @@
+name: record_sensors
+windows:
+  - name: simulator
+    layout: main-vertical
+    panes:
+      - null
+      - package: av_recorder
+        cmd: ros2 launch av_recorder recorder.launch.py
+      - package: orin_rp2_csi
+        cmd: ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
+      - package: leg_detector
+        cmd: ros2 launch leg_detector leg_detector.launch.py
+      - package: ut_automata
+        cmd: ros2 launch ut_automata lidar.launch.py
+      - package: ut_automata
+        cmd: ros2 run ut_automata vesc_driver --config_dir $HOME/workspace/install/ut_automata/share/ut_automata/config
+      - package: ut_automata
+        cmd: ros2 run ut_automata joystick
+      - package: av_description
+        cmd: ros2 launch av_description description.launch.py
+      - package: ut_automata
+        # Probe for a LIVE X server on :9 (a stale X9 socket from a previous run
+        # passes a plain [ -S ... ] file test and Qt apps then crash with "could
+        # not connect to display :9"; connect() on a dead socket is refused).
+        cmd: until python3 -c 'import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect("/tmp/.X11-unix/X9")' 2>/dev/null; do sleep 0.5; done && DISPLAY=:9 ros2 run ut_automata gui
+      - package: vnc
+        cmd: $HOME/roboracer_ws/scripts/vnc
