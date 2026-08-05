@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 # Build airfield packages ONCE into the shared persistent workspace at
-# ~/workspace/{build,install} (mounted into every container via the project
-# .air), serially and with capped build parallelism.
+# ~/workspace/{build,install} (which airfield mounts into every container
+# itself), serially and with capped build parallelism.
 #
 # Why this exists:
 #   airfield runs one ephemeral container per pane and, by default, each pane
@@ -16,8 +16,8 @@
 #   build each package serially into the shared install/, with no nodes running
 #   and make/cmake parallelism capped so a single build never approaches the
 #   memory ceiling. Afterwards `airfield project up <plan>` finds the prebuilt
-#   install/ and the panes only source + launch (no rebuild) -- see the colcon
-#   guard in airfield's tmux/tmuxinator.yml.j2.
+#   install/ and the panes only source + launch (no rebuild) -- see the
+#   already-built check in airfield's /opt/airfield-entry.sh (builder.py).
 #
 # Usage:
 #   scripts/build                 # build the navstack source packages

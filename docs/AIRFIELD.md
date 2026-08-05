@@ -219,15 +219,18 @@ Create `.air` at the **project root**:
 mounts:
   - ~/.bash_history
   - ~/.ssh/authorized_keys
-  # build once, launch many (see §1)
-  - ~/workspace/build
-  - ~/workspace/install
-  - ~/workspace/log
   # Qt panes (ut_automata `gui`, `rviz2`) reaching the touchscreen (:0)
   # or the vnc pane's display (:9)
   - /tmp/.X11-unix
   - /run/user/$UID/gdm
 ```
+
+> **The shared workspace is no longer listed here.** `~/workspace/{build,install,log}`
+> used to need three `.air` lines, and a car that skipped them rebuilt every
+> package in every pane *and* lost the build lock that keeps those rebuilds from
+> running concurrently — the OOM reboot in §1. Airfield now mounts the workspace
+> in core on every machine, so build-once works on a fresh clone with no `.air`
+> at all. `$AIRFIELD_WORKSPACE` relocates it (or `none` disables it).
 
 `$UID` expands to the login user's real numeric id, so this snippet is
 copy-paste identical on every car — **don't hardcode `2002`**, or the mount
