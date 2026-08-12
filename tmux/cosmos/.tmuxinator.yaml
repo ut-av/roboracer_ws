@@ -1,0 +1,39 @@
+# On-car Cosmos3-Edge INT4 policy + navstack.
+#
+# Server runs on the Jetson host (venv + CUDA). ROS nodes and the websocket
+# client run inside orin_roboracer (--net=host, so 127.0.0.1 reaches the host).
+#
+# Usage:
+#   cd ~/roboracer_ws/tmux/cosmos && tmuxinator
+#   LIVE=1 DIRECTION=loop_ccw tmuxinator          # publish to the car
+#   MAP=gdc_3n DIRECTION=pass_right tmuxinator
+#
+# Client defaults to dry-run (log only). Pass LIVE=1 for --live.
+#
+# Note: keep each pane command on ONE line. tmuxinator flattens "\\\n  --flag"
+# into "\ --flag", which bash turns into a leading-space flag tyro rejects.
+name: cosmos
+root: ~/roboracer_ws
+
+on_project_start: ./container start
+
+windows:
+  - cosmos:
+      layout: main-vertical
+      panes:
+        - # free shell
+        # INT4 policy server (host)
+        - cd /home/orin/cosmos-edge && ./run_roboracer_server.sh --checkpoint-path /home/orin/edge_v3_iter2400_int4 --port 18767 --host 127.0.0.1 --eval-root /home/orin/roboracer_lerobot_eval --vae-path /home/orin/Wan2.2_VAE_fp16.pth
+        # Chunk-buffered client (container). Wait for server load/"ready".
+        - sleep 45; ./container cmd 'python3 -c "import websockets, msgpack" 2>/dev/null || pip3 install --user websockets msgpack; python3 /home/orin/roboracer_ws/roboracer_chunk_buffered_client.py --server-ip 127.0.0.1 --server-port 18767 --direction <%= ENV["DIRECTION"] || "loop_ccw" %> <%= ENV["LIVE"] == "1" ? "--live" : "" %>'
+        # Camera + navstack (container)
+        - ./container cmd 'ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"'
+        - ./container cmd 'ros2 launch av_navigation navigation.launch.py map:=<%= ENV["MAP"] || "gdc_3n" %>'
+        - ./container cmd 'ros2 launch ut_automata hokuyo_10lx.launch.py'
+        - ./container cmd 'ros2 run ut_automata vesc_driver'
+        - ./container cmd 'ros2 run ut_automata joystick'
+        - ./container cmd 'ros2 launch av_description description.launch.py'
+        - ./container cmd 'ros2 launch foxglove_bridge foxglove_bridge_launch.xml'
+        - ./container cmd 'ros2 run ut_automata gui'
+        - vnc
+        - sleep 10; ./container cmd 'DISPLAY=:9 rviz2 -d rviz2/navstack.rviz'
