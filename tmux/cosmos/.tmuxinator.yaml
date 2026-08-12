@@ -23,7 +23,7 @@ windows:
       panes:
         - # free shell
         # INT4 policy server (host)
-        - cd /home/orin/cosmos-edge && ./run_roboracer_server.sh --checkpoint-path /home/orin/edge_v3_iter2400_int4 --port 18767 --host 127.0.0.1 --eval-root /home/orin/roboracer_lerobot_eval --vae-path /home/orin/Wan2.2_VAE_fp16.pth
+        - cd /home/orin/roboracer_ws/src/cosmos-edge && ./run_roboracer_server.sh --checkpoint-path /home/orin/edge_v3_iter2400_int4 --port 18767 --host 127.0.0.1 --eval-root /home/orin/roboracer_lerobot_eval --vae-path /home/orin/Wan2.2_VAE_fp16.pth
         # Chunk-buffered client (container). Wait for server load/"ready".
         - sleep 45; ./container cmd 'python3 -c "import websockets, msgpack" 2>/dev/null || pip3 install --user websockets msgpack; python3 /home/orin/roboracer_ws/roboracer_chunk_buffered_client.py --server-ip 127.0.0.1 --server-port 18767 --direction <%= ENV["DIRECTION"] || "loop_ccw" %> <%= ENV["LIVE"] == "1" ? "--live" : "" %>'
         # Camera + navstack (container)
