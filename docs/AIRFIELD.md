@@ -105,9 +105,10 @@ airfield project down         # clean teardown (containers stop via SIGHUP handl
   `airfield project down --prune` to sweep leftover `airfield-run-*` containers.
 - To regenerate the tmux config **without** launching: `airfield project up
   navstack --no-launch` (writes `.airfield/navstack.tmuxinator.yml`).
-- Force a clean rebuild: `rm -rf ~/workspace/build ~/workspace/install`, then
-  relaunch (panes rebuild on demand) or pre-build serially with
-  `scripts/build [pkgs...]`.
+- Force a clean rebuild: `rm -rf .airfield/workspace/{build,install}` from the
+  project root, then relaunch (panes rebuild on demand) or pre-build serially
+  with `scripts/build [pkgs...]`. Note this is the **host** path; `~/workspace`
+  is what the same directory is called inside a container.
 - `scripts/up` / `scripts/down` still exist as belt-and-braces **crash
   recovery**: they additionally clear a stale `:9` display lock and restart
   `nvargus-daemon` (stuck CSI capture session) — host-side state airfield
@@ -237,12 +238,15 @@ mounts:
   - /run/user/$UID/gdm
 ```
 
-> **The shared workspace is no longer listed here.** `~/workspace/{build,install,log}`
-> used to need three `.air` lines, and a car that skipped them rebuilt every
-> package in every pane *and* lost the build lock that keeps those rebuilds from
-> running concurrently — the OOM reboot in §1. Airfield now mounts the workspace
-> in core on every machine, so build-once works on a fresh clone with no `.air`
-> at all. `$AIRFIELD_WORKSPACE` relocates it (or `none` disables it).
+> **The shared workspace is no longer listed here.** It used to need three
+> `.air` lines pointing at `~/workspace/{build,install,log}`, and a car that
+> skipped them rebuilt every package in every pane *and* lost the build lock
+> that keeps those rebuilds from running concurrently — the OOM reboot in §1.
+> Airfield now mounts the workspace in core on every machine, from
+> `.airfield/workspace/` inside the project, so build-once works on a fresh
+> clone with no `.air` at all. `$AIRFIELD_WORKSPACE` relocates it (or `none`
+> disables it). Cars whose `.air` still lists the old three lines keep working:
+> the duplicate mount is skipped rather than failing the run.
 
 `$UID` expands to the login user's real numeric id, so this snippet is
 copy-paste identical on every car — **don't hardcode `2002`**, or the mount

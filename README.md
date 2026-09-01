@@ -39,8 +39,8 @@ cd roboracer_ws
 # The tag (roboracer/l4t-jazzy:r39.2) must match the host JetPack/L4T version.
 dependencies/arm64/l4t-jazzy/build.sh
 
-# build the ROS 2 packages ONCE into the shared ~/workspace/install (serial,
-# memory-capped so it does not OOM the Jetson).
+# build the ROS 2 packages ONCE into the shared .airfield/workspace/install
+# (serial, memory-capped so it does not OOM the Jetson).
 scripts/build
 
 # launch the navigation stack: cleans stale state, (re)builds if needed, launches.
