@@ -1,8 +1,13 @@
 #!/bin/bash
 #
 # Build airfield packages ONCE into the shared persistent workspace at
-# ~/workspace/{build,install} (which airfield mounts into every container
-# itself), serially and with capped build parallelism.
+# .airfield/workspace/{build,install} (which airfield mounts into every
+# container itself, at ~/workspace), serially and with capped build parallelism.
+#
+# The workspace is per-PROJECT, not per-machine: two airfield projects that both
+# contain a package of the same name would otherwise share one install/ and the
+# second would silently source the first one's binaries. Inside the container it
+# is always ~/workspace, so only the host-side location differs.
 #
 # Why this exists:
 #   airfield runs one ephemeral container per pane and, by default, each pane
@@ -24,9 +29,15 @@
 #   scripts/build pkg_a pkg_b ...  # build a specific set
 #
 # To force a clean rebuild (e.g. after pulling new sources):
-#   rm -rf ~/workspace/build ~/workspace/install && scripts/build
+#   rm -rf .airfield/workspace/{build,install} && scripts/build
 #
 set -euo pipefail
+
+# Host side of the shared workspace. Mirrors airfield's own default
+# (<project>/.airfield/workspace, overridable with AIRFIELD_WORKSPACE) so this
+# script and the containers it launches always agree on where install/ lives.
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WS="${AIRFIELD_WORKSPACE:-$PROJECT_ROOT/.airfield/workspace}"
 
 # Use the locally-built base image (roboracer/l4t-jazzy) instead of forcing a
 # registry pull, which fails (the base is local-only). The navstack plan sets
@@ -42,9 +53,9 @@ if [ ${#PKGS[@]} -eq 0 ]; then
     PKGS=("${DEFAULT_PKGS[@]}")
 fi
 
-mkdir -p "$HOME/workspace/build" "$HOME/workspace/install" "$HOME/workspace/log"
+mkdir -p "$WS/build" "$WS/install" "$WS/log"
 
-echo "Building into shared workspace: $HOME/workspace/install"
+echo "Building into shared workspace: $WS/install"
 echo "Packages (serial): ${PKGS[*]}"
 echo
 
@@ -71,4 +82,4 @@ done
 echo "=================================================================="
 echo "  done. shared install/ now contains:"
 echo "=================================================================="
-ls "$HOME/workspace/install"
+ls "$WS/install"

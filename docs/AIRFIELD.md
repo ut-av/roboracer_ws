@@ -23,17 +23,29 @@ roboracer_ws/                 PROJECT (airfield.yaml at root)
 ├── plans/<name>.yaml         a launch target (windows/panes -> tmux)
 └── scripts/                  build / up / down wrappers (below)
 
-~/workspace/{build,install,log}   SHARED colcon workspace, mounted into every
-                                  container. Built ONCE by scripts/build; panes
-                                  only source it and launch.
+└── .airfield/workspace/{build,install,log}
+                              SHARED colcon workspace (gitignored), mounted into
+                              every container at ~/workspace. Built ONCE; panes
+                              only source it and launch.
 ```
 
 Key idea — **build once, launch many**: every package image mounts the same
-`~/workspace`, so the ROS 2 code is compiled a single time into
-`~/workspace/install`. Panes then only `source` that install (automatically, via
-the container's `~/.profile`) and run `ros2 launch/run`. This is what keeps the
+workspace at `~/workspace`, so the ROS 2 code is compiled a single time into
+`install/`. Panes then only `source` that install (automatically, via the
+container's `~/.profile`) and run `ros2 launch/run`. This is what keeps the
 7.4 GB Jetson from OOMing (the old per-pane concurrent `colcon build` demanded
 ~19 GB — see [scripts/build](../scripts/build)).
+
+Note the two paths for one directory. On the **host** it is
+`.airfield/workspace/`, inside this project, because airfield scopes the
+workspace per project: a machine-wide one would let two projects that each
+contain a package of the same name share a single `install/<name>`, and the
+second project would silently source the first one's binaries. Inside the
+**container** it is always `~/workspace`, on every project and every machine, so
+anything you run in a container (including the `colcon build` in
+[scripts/build](../scripts/build)) uses `~/workspace` unchanged.
+`AIRFIELD_WORKSPACE` overrides the host side if you ever want several projects
+sharing one build tree.
 
 ---
 
