@@ -35,8 +35,10 @@ cd ~
 git clone https://github.com/ut-av/roboracer_ws.git
 cd roboracer_ws
 
-# one-time, on the Jetson: build the L4T-matched base image.
-# The tag (roboracer/l4t-jazzy:r39.2) must match the host JetPack/L4T version.
+# one-time, on the Jetson: build the L4T-matched base image. The script reads
+# this host's L4T version, pins the image to it, and tags it accordingly
+# (JetPack 7.2.1 -> roboracer/l4t-jazzy:r39.2.1). It warns if that tag differs
+# from airfield.yaml's base_image, i.e. if this car is on a different JetPack.
 dependencies/arm64/l4t-jazzy/build.sh
 
 # build the ROS 2 packages ONCE into the shared .airfield/workspace/install

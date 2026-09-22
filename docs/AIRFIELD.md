@@ -66,11 +66,14 @@ the base image:
    > dependency before building; if a manifest is missing the build fails with an
    > unresolved-dependency error. Missing manifests must be added either to that
    > global repo or to this project's `dependencies/xplatform/`.
-3. **The L4T-matched base image** (`roboracer/l4t-jazzy:r39.2`), built on the
-   Jetson:
+3. **The L4T-matched base image** (`roboracer/l4t-jazzy:r39.2.1` on the fleet's
+   JetPack 7.2.1), built on the Jetson:
    ```bash
    dependencies/arm64/l4t-jazzy/build.sh
    ```
+   The script derives both the pin and the tag from *this host's* L4T version —
+   see [§5](#5-cross-orin--different-car) for what happens on a car that's on a
+   different JetPack.
    This image is **local-only** (not in any registry), which is why the scripts
    export `AIRFIELD_NO_PULL=1` — otherwise `docker build --pull` fails trying to
    fetch it. See [§5](#5-cross-orin--different-car).
@@ -264,22 +267,42 @@ to draw on `:0` while VNC keeps working).
 
 ## 5. Cross-Orin / different-car
 
-- **Base-image target: JetPack 7.2 = Jetson Linux / L4T R39.2.** Confirmed on the
-  reference Orin: `nvidia-jetpack` = `7.2-b187`, `/etc/nv_tegra_release` = `R39
-  (release), REVISION: 2.0`. The base image is pinned to `r39.2` to match that.
-  The pin lives in **one** place — the project [airfield.yaml](../airfield.yaml)
-  `base_image:` field, which every package inherits (a package may still override
-  with its own `base_image:`).
-  - **Same JetPack (7.2) on the new Orin** → the base already matches. You only
-    need to *build* it locally (it's a local-only image — see §2); do **not** change
-    the Dockerfile or tag.
-  - **Different JetPack/L4T** → first check the new host's version
-    (`cat /etc/nv_tegra_release`), then:
-    1. edit the L4T apt repo version in
-       [dependencies/arm64/l4t-jazzy/Dockerfile](../dependencies/arm64/l4t-jazzy/Dockerfile)
-       and the tag in [build.sh](../dependencies/arm64/l4t-jazzy/build.sh) to match
-       the host, then rebuild the base;
-    2. update the single `base_image:` line in the project `airfield.yaml`.
+- **Fleet base-image target: JetPack 7.2.1 = Jetson Linux / L4T R39.2.1.**
+  Check any car with `dpkg-query -W -f='${Version}' nvidia-l4t-core` (or
+  `cat /etc/nv_tegra_release` for the release/revision form).
+
+- **The image is pinned to the host's exact L4T package version, not to NVIDIA's
+  apt dist.** Those dists are major.minor only and accumulate point releases —
+  `r39.2` serves both `39.2.0` (JetPack 7.2) and `39.2.1` (JetPack 7.2.1) — so
+  naming the dist pins nothing, and an unpinned install silently drifts ahead of
+  the host the moment NVIDIA ships a patch. That drift is invisible: the host's
+  Tegra plugins are mounted into the container at runtime, so a mismatched
+  container userspace only shows up as Argus/nvbuf breakage.
+
+- **Nothing is hardcoded to a JetPack release.**
+  [build.sh](../dependencies/arm64/l4t-jazzy/build.sh) reads `nvidia-l4t-core`'s
+  installed version off the host, passes it to the
+  [Dockerfile](../dependencies/arm64/l4t-jazzy/Dockerfile) as a build arg (which
+  pins every `nvidia-l4t-*` package, transitive ones included), derives the apt
+  dist from it, and tags the image with the full release. A future JetPack needs
+  **no edit** to either file.
+
+- The one fleet-wide pointer is the `base_image:` field in the project
+  [airfield.yaml](../airfield.yaml), which every package inherits (a package may
+  still override with its own `base_image:`).
+  - **New Orin on the fleet JetPack** → just run `build.sh`. Nothing to edit.
+    (It's a local-only image — see §2 — so it must be built on every car.)
+  - **Orin on a different JetPack** → `build.sh` still works and tags the image
+    for whatever that host runs; it then **warns** that the tag doesn't match
+    `airfield.yaml`. Either reflash the car to the fleet version, or point
+    `base_image:` at the tag it built, locally and uncommitted.
+  - **Whole fleet moving to a new JetPack** → update `base_image:` once, rebuild
+    on each car.
+  - **`build.sh` fails its pre-flight check** → NVIDIA has pruned that host's L4T
+    version from the repo. The error lists what's still published; override with
+    `L4T_VERSION=<version> dependencies/arm64/l4t-jazzy/build.sh`, accepting that
+    this re-introduces host/container skew.
+
 - **Device paths** (`/dev/ttyACM0`, `/dev/i2c-7`) can differ per carrier board /
   USB layout — see [§4](#4-per-car-configuration-checklist-).
 - The workspace **must** live at `~/roboracer_ws` (some source hardcodes it).
