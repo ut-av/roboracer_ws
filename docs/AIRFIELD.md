@@ -55,7 +55,7 @@ On a fresh machine you need **three** things that are NOT part of this repo, plu
 the base image:
 
 1. **The airfield CLI** — installed (e.g. via `pipx`) and on the branch that has
-   the roboracer changes (device passthrough, peer-source mounts, `AIRFIELD_NO_PULL`).
+   the roboracer changes (device passthrough, peer-source mounts, `pull_base_image`).
    Verify with `airfield --help` and `airfield doctor`.
 2. **The airfield `packages` repo** — checked out next to the airfield source. It
    provides the *global* dependency manifests (nav2_*, cv_bridge, sensor_msgs,
@@ -74,9 +74,9 @@ the base image:
    The script derives both the pin and the tag from *this host's* L4T version —
    see [§5](#5-cross-orin--different-car) for what happens on a car that's on a
    different JetPack.
-   This image is **local-only** (not in any registry), which is why the scripts
-   export `AIRFIELD_NO_PULL=1` — otherwise `docker build --pull` fails trying to
-   fetch it. See [§5](#5-cross-orin--different-car).
+   This image is **local-only** (not in any registry), which is why the project
+   [airfield.yaml](../airfield.yaml) sets `pull_base_image: false` — otherwise
+   `docker build --pull` fails trying to fetch it. See [§5](#5-cross-orin--different-car).
 4. **The PlayStation-controller kernel module** — JetPack's kernel ships without
    `CONFIG_HID_PLAYSTATION`, so PS4-style pads (incl. the fleet's AceGamer
    clones) get wrong mappings, no battery, and won't Bluetooth-pair at all:
@@ -322,9 +322,11 @@ to draw on `:0` while VNC keeps working).
   pane's X display `:9`. An unclean teardown can leave a stale `:9`; `scripts/up`
   clears it. Always tear down with `scripts/down` (tmux's `kill-server` leaves
   airfield containers orphaned because they only clean up on SIGTERM/SIGINT).
-- **`AIRFIELD_NO_PULL=1`** — set by the scripts and the navstack plan so builds use
-  the local L4T base image instead of trying to pull it from a registry.
+- **`pull_base_image: false`** — set once in the project [airfield.yaml](../airfield.yaml)
+  so every airfield command, on every car, builds from the local L4T base image
+  instead of trying to pull it from a registry. No per-car shell setup needed.
+  (`AIRFIELD_NO_PULL=0` forces a pull for one command; `=1` skips it.)
 - **Editing airfield's own source** invalidates the `COPY airfield /opt/airfield`
   layer in every package image, so the next launch rebuilds images. After such an
-  edit, pre-warm images (`AIRFIELD_NO_PULL=1 airfield package cmd <pkg> -- true`)
+  edit, pre-warm images (`airfield package cmd <pkg> -- true`)
   before launching.

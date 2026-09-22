@@ -91,8 +91,8 @@ echo "Done: $IMAGE_TAG"
 # --- 4. Does the project actually point at what we just built? -------------
 # `base_image:` is one fleet-wide value, so a car on a different JetPack builds a
 # tag nothing references. Say so here rather than letting the launch fail later
-# with an opaque "image not found" (the scripts set AIRFIELD_NO_PULL=1, so Docker
-# won't go looking for it in a registry either).
+# with an opaque "image not found" (airfield.yaml sets pull_base_image: false, so
+# Docker won't go looking for it in a registry either).
 if [ -f "$PROJECT_YAML" ]; then
     CONFIGURED="$(sed -n 's/^base_image:[[:space:]]*//p' "$PROJECT_YAML" | head -1)"
     if [ -n "$CONFIGURED" ] && [ "$CONFIGURED" != "$IMAGE_TAG" ]; then

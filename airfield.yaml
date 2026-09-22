@@ -12,6 +12,9 @@ ros_distro: jazzy
 # tag from that car's own L4T version and warns if it differs from this line.
 # When the whole fleet moves to a new JetPack, update this once and rebuild.
 base_image: roboracer/l4t-jazzy:r39.2.1
+# That image is built on each car and exists in no registry, so airfield must
+# never try to download a newer copy of it (the build would fail).
+pull_base_image: false
 subprojects:
   amrl_maps:
     url: https://github.com/ut-amrl/amrl_maps.git

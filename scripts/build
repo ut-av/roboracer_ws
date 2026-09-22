@@ -39,11 +39,6 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WS="${AIRFIELD_WORKSPACE:-$PROJECT_ROOT/.airfield/workspace}"
 
-# Use the locally-built base image (roboracer/l4t-jazzy) instead of forcing a
-# registry pull, which fails (the base is local-only). The navstack plan sets
-# this in its pre_window; set it here too so this script works standalone.
-export AIRFIELD_NO_PULL=1
-
 # Source packages launched by the navstack plan. Image/apt-only panes
 # (foxglove_bridge, vnc, rviz2) have no colcon source and are skipped.
 DEFAULT_PKGS=(orin_rp2_csi av_description ut_automata av_navigation)
