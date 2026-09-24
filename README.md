@@ -12,7 +12,7 @@ This repository is designed to be run in two modes, which are automatically sele
 
 2. Hardware mode is active when an NVIDIA Jetson Orin device is detected,
 
-> Note: For hardware mode, firmware flashing and setup is in the [ot_orin_ros2](https://github.com/FRI-Self-Driving/ot_orin_ros2.git) repository.
+> Note: For hardware mode on the F1TENTH cars, flashing and setup are covered in [Car Bring-Up](https://ut-av.pages.dev/hardware/car_bringup/).
 
 The workspace must be named `roboracer_ws` and be located in the user's home directory, which the code relies on to find configuration files in the source tree.
 
@@ -24,10 +24,10 @@ which wraps each ROS 2 package in its own container image and launches the stack
 as a multi-pane tmux session. On the car (Jetson Orin) the whole navigation stack
 comes up with one command once the one-time setup is done.
 
-> **First-time setup, new-car bring-up, per-car calibration, and cross-Orin / L4T
-> notes are in [docs/AIRFIELD.md](docs/AIRFIELD.md). Read that first on a fresh
-> machine — the steps below assume airfield is already installed and the L4T base
-> image has been built.**
+> **How the workspace is built, launched, configured and updated, including
+> setting up a fresh machine and the Jetson base image, is in the
+> [Airfield guide](https://ut-av.pages.dev/tools/airfield/). Read that first on a
+> fresh machine — the steps below assume airfield is already installed.**
 
 ```bash
 # clone into the home directory (this exact path is REQUIRED — see note above)

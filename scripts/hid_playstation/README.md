@@ -17,7 +17,7 @@ known-good code with no network dependency:
 - `dkms.conf` — DKMS packaging (`AUTOINSTALL=yes` → rebuilds on kernel updates).
 
 Install with [`../install_ds4_driver.sh`](../install_ds4_driver.sh); pairing
-procedure in [`docs/AIRFIELD.md`](../../docs/AIRFIELD.md).
+procedure in [Pair a controller](https://ut-av.pages.dev/hardware/joystick/#pair-a-controller).
 
 If the fleet ever moves to a new kernel *series* (e.g. 6.8 → 6.11), refresh
 these two sources from the matching `v<major.minor>` tag and bump

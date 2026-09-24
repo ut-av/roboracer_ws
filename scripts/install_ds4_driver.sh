@@ -17,7 +17,8 @@
 # kernel updates. Falls back to a one-shot manual build if DKMS can't be
 # installed (offline car) — re-run after kernel updates in that case.
 #
-# Afterwards, pair each controller: see docs/AIRFIELD.md §4f, or the summary
+# Afterwards, pair each controller: see
+# https://ut-av.pages.dev/hardware/joystick/#pair-a-controller, or the summary
 # this script prints at the end. Day-to-day pairing management (list/unpair):
 # scripts/bluetooth_controller_manager.sh
 #
