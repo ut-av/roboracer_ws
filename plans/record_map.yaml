@@ -14,6 +14,12 @@ windows:
         cmd: ros2 run ut_automata joystick
       - package: av_description
         cmd: ros2 launch av_description description.launch.py
+      - package: foxglove_bridge
+        # Mapping is watched remotely at least as often as on the car's own
+        # display, so stream /map, /scan and /tf to Foxglove the same way teleop
+        # and navstack do. The rviz2 pane below shows the same thing locally on
+        # the vnc display; both can run at once.
+        cmd: ros2 launch foxglove_bridge foxglove_bridge_launch.xml
       - package: ut_automata
         # Probe for a LIVE X server on :9, not just the socket file: a previous
         # run's X9 socket survives in /tmp/.X11-unix after its server dies, so a
