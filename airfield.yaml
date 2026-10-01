@@ -4,9 +4,17 @@ version: 0.1.0
 ros_distro: jazzy
 # Project-wide default container base image. Individual packages inherit this
 # unless they set their own `base_image:`. Single source of truth for the
-# L4T-matched base — re-tag here (and rebuild via dependencies/arm64/l4t-jazzy)
-# when moving to a different JetPack/L4T version. See docs/AIRFIELD.md.
-base_image: roboracer/l4t-jazzy:r39.2
+# L4T-matched base; the fleet standard is JetPack 7.2.1 = L4T R39.2.1.
+#
+# The tag carries the FULL L4T release (r39.2.1), not NVIDIA's apt dist (r39.2),
+# because one dist serves several point releases — see dependencies/arm64/l4t-jazzy.
+# Build it per car with dependencies/arm64/l4t-jazzy/build.sh, which derives the
+# tag from that car's own L4T version and warns if it differs from this line.
+# When the whole fleet moves to a new JetPack, update this once and rebuild.
+base_image: roboracer/l4t-jazzy:r39.2.1
+# That image is built on each car and exists in no registry, so airfield must
+# never try to download a newer copy of it (the build would fail).
+pull_base_image: false
 subprojects:
   amrl_maps:
     url: https://github.com/ut-amrl/amrl_maps.git

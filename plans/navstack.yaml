@@ -1,5 +1,4 @@
 name: navstack
-pre_window: export AIRFIELD_NO_PULL=1
 windows:
   - name: simulator
     layout: main-vertical

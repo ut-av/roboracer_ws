@@ -17,18 +17,28 @@ ros_versions:
 # ament/AMENT_PREFIX_PATH with no extra overlay to source at runtime. Note
 # the ros2 branch names the executable `rplidar_node` (the apt build called
 # it `rplidar_composition`) -- lidar.launch.py uses `rplidar_node`.
+#
+# Installed with plain CMake, the way ROS's own .deb packages are built, NOT
+# `colcon build --install-base /opt/ros/$ROS_DISTRO`. colcon writes its own
+# prefix-level setup.bash / local_setup.* over ROS's, and those only know about
+# packages colcon itself installed -- so sourcing /opt/ros/jazzy/setup.bash
+# afterwards set up rplidar_ros and nothing else (no ROS_VERSION, no core
+# packages). amrl_maps' CMakeLists requires ROS_VERSION, so every fresh car's
+# first `scripts/build` failed at amrl_maps inside the ut_automata image.
+# A CMake install adds only the package's own files and ament-index entry.
 system:
   - >-
     . /opt/ros/$ROS_DISTRO/setup.sh
-    && mkdir -p /tmp/rplidar_ws/src/rplidar_ros
-    && cd /tmp/rplidar_ws/src/rplidar_ros
+    && mkdir -p /tmp/rplidar_ws/src
+    && cd /tmp/rplidar_ws/src
     && git init -q
     && git remote add origin https://github.com/Slamtec/rplidar_ros.git
     && git fetch -q --depth 1 origin 24cc9b6dea97e045bda1408eaa867ce730fd3fc3
     && git checkout -q FETCH_HEAD
-    && cd /tmp/rplidar_ws
-    && colcon build --packages-select rplidar_ros --merge-install
-    --install-base /opt/ros/$ROS_DISTRO
-    --cmake-args -DCMAKE_BUILD_TYPE=Release
+    && cmake -S /tmp/rplidar_ws/src -B /tmp/rplidar_ws/build
+    -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+    -DCMAKE_INSTALL_PREFIX=/opt/ros/$ROS_DISTRO
+    && cmake --build /tmp/rplidar_ws/build --parallel "$(nproc)"
+    && cmake --install /tmp/rplidar_ws/build
     && cd / && rm -rf /tmp/rplidar_ws
 user: []

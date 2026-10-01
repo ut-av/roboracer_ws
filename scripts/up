@@ -32,7 +32,7 @@ rm -f /tmp/.X11-unix/X9 /tmp/.X9-lock 2>/dev/null || true
 sudo -n systemctl restart nvargus-daemon 2>/dev/null || true
 
 # Build-once: compile exactly the colcon packages THIS plan launches into the
-# shared ~/workspace/install (serial + OOM-safe via scripts/build). We derive the
+# shared .airfield/workspace/install (serial + OOM-safe via scripts/build). We derive the
 # set from the plan's `package:` entries so every plan -- current and future --
 # works without hand-listing packages here.
 #
