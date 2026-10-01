@@ -1,0 +1,14 @@
+name: torch
+version: 1.0.0
+# GPU (CUDA 13.2) PyTorch for JetPack 7.2.x / L4T r39.2 on Jetson Orin (sm_87),
+# Python 3.12. The upstream PyTorch index now hosts aarch64 cu132 wheels, so no
+# NVIDIA / jetson-ai-lab index is needed; this is NVIDIA's own recommendation on
+# the JP7.2 forum thread. This arm64 recipe shadows the shared `torch` recipe,
+# which installs a CPU-only wheel that leaves training and export on the CPU.
+#
+# Pinned to the versions verified on JP7.2 (torch 2.12.0+cu132). Bump these when
+# the fleet moves to a new JetPack/CUDA, same as base_image in airfield.yaml.
+# av_imitation does not use torchvision, so it is intentionally not installed.
+# A removed/renamed wheel fails the build loudly rather than silently falling back.
+user:
+  - python3 -m pip install --break-system-packages torch==2.12.0 --index-url https://download.pytorch.org/whl/cu132

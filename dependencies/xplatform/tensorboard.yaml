@@ -1,0 +1,8 @@
+name: tensorboard
+version: 1.0.0
+# Pure-Python, from PyPI; architecture-independent, so it lives in xplatform/.
+# Used by av_imitation/src/main.py (torch.utils.tensorboard.SummaryWriter) to log
+# the training/validation loss curves, and served over the port the training
+# tutorial opens in a browser.
+pip:
+  - tensorboard
