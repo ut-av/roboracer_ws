@@ -1,0 +1,18 @@
+name: onnxruntime
+version: 1.0.0
+# CPU onnxruntime (aarch64 manylinux wheel from PyPI). There is NO prebuilt
+# onnxruntime-gpu wheel for JetPack 7.2 / L4T r39.2 / CUDA 13.2 as of 2026-10:
+# pip's `onnxruntime-gpu` ships x86_64 + Windows only, and the Jetson AI stack
+# has not published a JP7 build. A GPU wheel (CUDA/TensorRT execution providers)
+# must be built from source on the Orin (~4h) -- see
+# https://github.com/straga/jetson-jp7-onnxruntime -- then installed here with a
+# `user:` pip command pointing at that wheel, replacing the line below.
+#
+# CPU is adequate for now: the imitation models are small (MLP/CNN on 320x240).
+# play.py (the car's imitation_inference node) and the webapp "Run Inference" tab
+# use the default provider; inference.py asks for CUDAExecutionProvider, which
+# onnxruntime downgrades to CPU with a warning rather than failing.
+#
+# Shadows the shared `onnxruntime` recipe.
+pip:
+  - onnxruntime
