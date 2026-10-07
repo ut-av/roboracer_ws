@@ -16,11 +16,10 @@ base_image: roboracer/l4t-jazzy:r39.2.1
 # never try to download a newer copy of it (the build would fail).
 pull_base_image: false
 subprojects:
-  amrl_maps:
-    url: https://github.com/ut-amrl/amrl_maps.git
-    version: ros2
+  # ut-av's copy of ut-amrl/amrl_msgs, which adds the airfield.yaml that lets
+  # airfield build it from source for the packages that use its messages.
   amrl_msgs:
-    url: https://github.com/ut-amrl/amrl_msgs.git
+    url: https://github.com/ut-av/amrl_msgs.git
     version: master
   av_description:
     url: https://github.com/ut-av/av_description.git
@@ -46,9 +45,6 @@ subprojects:
   orin_rp2_csi:
     url: https://github.com/ut-av/orin_rp2_csi.git
     version: master
-  mpu6050driver:
-    url: https://github.com/nathantsoi/ros2_mpu6050_driver.git
-    version: main
   simulator:
     url: https://github.com/ut-av/simulator.git
     version: master
