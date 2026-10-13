@@ -36,16 +36,16 @@ sudo -n systemctl restart nvargus-daemon 2>/dev/null || true
 # set from the plan's `package:` entries so every plan -- current and future --
 # works without hand-listing packages here.
 #
-# Tool/non-colcon packages are skipped: they ship no ROS source (vnc, rviz2,
-# foxglove_bridge are apt/wrapper-only; simulator is a prebuilt binary + uv app),
-# so `colcon build --packages-up-to <them>` would find nothing to build.
+# Tool/non-colcon packages are skipped: they ship no ROS source (vnc and rviz2
+# are apt/wrapper-only; simulator is a prebuilt binary + uv app), so
+# `colcon build --packages-up-to <them>` would find nothing to build.
 PLAN_FILE="$SCRIPT_DIR/../plans/$PLAN.yaml"
 if [ ! -f "$PLAN_FILE" ]; then
     echo "[up] plan file not found: $PLAN_FILE" >&2
     exit 1
 fi
 
-NON_COLCON=" vnc rviz2 foxglove_bridge simulator "
+NON_COLCON=" vnc rviz2 simulator "
 mapfile -t plan_pkgs < <(
     grep -E '^[[:space:]]*-?[[:space:]]*package:' "$PLAN_FILE" \
         | sed -E 's/.*package:[[:space:]]*//' \

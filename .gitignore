@@ -44,8 +44,6 @@ Taira AMRL Lab Notebook (1).md
 packages/*
 !packages/vnc
 !packages/rviz2
-!packages/foxglove_bridge
 packages/*/core
 !packages/vnc/.air
 !packages/rviz2/.air
-!packages/foxglove_bridge/.air

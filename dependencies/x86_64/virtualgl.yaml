@@ -1,0 +1,17 @@
+name: virtualgl
+version: 1.0.0
+# VirtualGL lets an OpenGL app on the VNC desktop (rviz2) draw with the GPU:
+# `vglrun -d egl <app>` renders through EGL and copies each frame to the app's
+# X display. Without a usable GPU, `vglrun -d egl` falls back to Mesa's software
+# renderer, so the same command works on any machine. See arm64/virtualgl.yaml.
+# Same release as the vnc manifest's copy.
+apt:
+  - libegl1
+  - libegl-mesa0
+  - libglu1-mesa
+  - libxtst6
+  - libxv1
+  - wget
+system:
+  - wget https://github.com/VirtualGL/virtualgl/releases/download/3.1.2/virtualgl_3.1.2_amd64.deb -O /tmp/virtualgl.deb
+    && dpkg -i /tmp/virtualgl.deb && rm /tmp/virtualgl.deb

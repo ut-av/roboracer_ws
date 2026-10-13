@@ -2,5 +2,8 @@ kind: package
 name: rviz2
 dependencies:
   - rviz2
+  # GPU drawing on the VNC display: plans start rviz2 with `vglrun -d egl`.
+  # See dependencies/arm64/virtualgl.yaml.
+  - virtualgl
 source_path: .
 ros_distro: jazzy

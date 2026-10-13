@@ -40,7 +40,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WS="${AIRFIELD_WORKSPACE:-$PROJECT_ROOT/.airfield/workspace}"
 
 # Source packages launched by the navstack plan. Image/apt-only panes
-# (foxglove_bridge, vnc, rviz2) have no colcon source and are skipped.
+# (vnc, rviz2) have no colcon source and are skipped.
 DEFAULT_PKGS=(orin_rp2_csi av_description ut_automata av_navigation)
 
 PKGS=("$@")
