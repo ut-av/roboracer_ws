@@ -4,6 +4,8 @@ windows:
     layout: main-vertical
     panes:
       - null
+      - package: av_recorder
+        cmd: ros2 launch av_recorder recorder.launch.py
       - package: orin_rp2_csi
         cmd: ros2 run orin_rp2_csi mono_processor --ros-args -p width:=320 -p height:=240 -p framerate:=30 -p display_mode:="none"
       - package: av_imitation
