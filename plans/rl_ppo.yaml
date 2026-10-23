@@ -1,11 +1,16 @@
 name: rl_ppo
-pre_window: export DISPLAY=:9
+# Runs on an x86_64 lab machine, never a car: the Unity simulator is x86_64-only.
+# Every pane uses the simulator package, whose image has its own x86_64 base and
+# TurboVNC; the project's other packages inherit the Jetson base image.
 windows:
   - name: simulator
     layout: main-vertical
     panes:
       - null
-      - package: vnc
-        cmd: if [ "$DISPLAY" = ":9" ]; then $HOME/roboracer_ws/scripts/vnc; fi
       - package: simulator
-        cmd: cd $HOME/roboracer_ws/simulator && uv sync && uv run python src/algorithms/ppo_pufferlib.py --random-spawn --random-spawn-max-cte-offset 0.8 --random-spawn-max-rotation-offset 10.0 --num-envs 1 --total-timesteps 2000000 --visualize --env-name donkey-roboracingleague-track-v0
+        cmd: $HOME/roboracer_ws/scripts/vnc
+      - package: simulator
+        # download_sim.sh fetches the Unity build the first time only. Wait for a
+        # LIVE X server on the vnc pane's :9 (same probe as navstack.yaml), since
+        # the sim and the training visualization both open windows there.
+        cmd: cd $HOME/workspace/src/simulator && ./scripts/download_sim.sh && uv sync && until python3 -c 'import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect("/tmp/.X11-unix/X9")' 2>/dev/null; do sleep 0.5; done && DISPLAY=:9 uv run python src/algorithms/ppo_pufferlib.py --random-spawn --random-spawn-max-cte-offset 0.8 --random-spawn-max-rotation-offset 10.0 --num-envs 1 --total-timesteps 2000000 --visualize --env-name donkey-roboracingleague-track-v0
