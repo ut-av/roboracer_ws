@@ -1,0 +1,16 @@
+name: uv
+version: 1.0.0
+# uv, the Python package manager the simulator package uses: `uv sync` installs
+# its pyproject.toml/uv.lock into a .venv in the mounted source tree, and the
+# rl_ppo plan trains with `uv run`. Installed to /usr/local/bin so it is on PATH
+# in every shell. The shared recipe book has no uv. curl and unzip are also for
+# simulator/scripts/download_sim.sh, which fetches the Unity binary.
+#
+# Pinned so the image doesn't change under us; bump the version in the URL to update.
+apt:
+  - ca-certificates
+  - curl
+  - unzip
+system:
+  - curl -LsSf https://astral.sh/uv/0.13.5/install.sh
+    | env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh

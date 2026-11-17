@@ -1,0 +1,25 @@
+name: vnc
+version: 1.0.0
+# TurboVNC + xfce for the plans' vnc pane on an x86_64 lab machine (the
+# simulator package lists it). This shadows the shared recipe book's
+# x86_64/vnc.yaml, which still names pre-24.04 packages (libegl1-mesa,
+# libgles2-mesa, libgl1-mesa-glx) that don't exist on the noble-based jazzy
+# images, so the build fails. Same package list as the shared arm64/vnc.yaml,
+# with the amd64 .debs. Same VirtualGL release as virtualgl.yaml.
+apt:
+  - xfce4
+  - xfce4-goodies
+  - dbus-x11
+  - wget
+  - libegl1
+  - libgles2
+  - libglvnd-dev
+  - libgl1
+  - libglx-mesa0
+  - libgl1-mesa-dri
+  - mesa-utils-extra
+system:
+  - wget https://github.com/VirtualGL/virtualgl/releases/download/3.1.2/virtualgl_3.1.2_amd64.deb -O /tmp/virtualgl.deb
+    && dpkg -i /tmp/virtualgl.deb && rm /tmp/virtualgl.deb
+  - wget https://github.com/TurboVNC/turbovnc/releases/download/3.2.1/turbovnc_3.2.1_amd64.deb -O /tmp/turbovnc.deb
+    && dpkg -i /tmp/turbovnc.deb && rm /tmp/turbovnc.deb && ln -s /opt/TurboVNC/bin/* /usr/local/bin/
