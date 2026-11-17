@@ -25,7 +25,7 @@
 #   already-built check in airfield's /opt/airfield-entry.sh (builder.py).
 #
 # Usage:
-#   scripts/build                 # build the navstack source packages
+#   scripts/build                 # build the navstack + teleop source packages
 #   scripts/build pkg_a pkg_b ...  # build a specific set
 #
 # To force a clean rebuild (e.g. after pulling new sources):
@@ -39,9 +39,9 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WS="${AIRFIELD_WORKSPACE:-$PROJECT_ROOT/.airfield/workspace}"
 
-# Source packages launched by the navstack plan. Image/apt-only panes
+# Source packages launched by the navstack and teleop plans. Image/apt-only panes
 # (vnc, rviz2) have no colcon source and are skipped.
-DEFAULT_PKGS=(orin_rp2_csi av_description ut_automata av_navigation)
+DEFAULT_PKGS=(orin_rp2_csi av_description ut_automata av_navigation leg_detector)
 
 PKGS=("$@")
 if [ ${#PKGS[@]} -eq 0 ]; then
